@@ -1,0 +1,30 @@
+﻿@model learnApp.Models.Employee
+
+@{
+    ViewData["Title"] = "Edit Employee";
+}
+
+<form asp-action="Edit">
+    <input type="hidden" asp-for="@Model.EmployeeId"/>
+    <div>
+        <label asp-for="@Model.EmployeeName"></label>
+        <input asp-for="@Model.EmployeeName" class="form-control"/>
+    </div>
+    <div>
+        <label asp-for="@Model.Phone"></label>
+        <input asp-for="@Model.Phone" class="form-control"/>
+    </div>
+    <div>
+        <label asp-for="@Model.Position"></label>
+        <input asp-for="@Model.Position" class="form-control" />
+    </div>
+    <div>
+        <label asp-for="@Model.HireDate"></label>
+        <input asp-for="@Model.HireDate" type="date" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update</button>
+
+</form>
+
+

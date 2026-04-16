@@ -1,0 +1,23 @@
+﻿@model learnApp.Models.Employee
+
+@{
+    ViewData["Title"] = "Add new employee";
+}
+
+<h1>Add new employee</h1>
+
+<form asp-action="Create">
+    <div>
+        <label>Name</label>
+        <input asp-for="@Model.EmployeeName" class="form-control"/>
+    </div>
+    <div>
+        <label>Phone</label>
+        <input asp-for="@Model.Phone" class="form-control" />
+    </div>
+    <div>
+        <label>HireDate</label>
+        <input asp-for="@Model.HireDate" class="form-control" />
+    </div>
+    <button type="submit">Add</button>
+</form>

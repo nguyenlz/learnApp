@@ -1,0 +1,53 @@
+﻿@model learnApp.Models.Employee
+
+@{
+    ViewData["Title"] = "Detail";
+}
+
+<h1>Employee Detail</h1>
+
+<div>
+    <span>
+        <strong>@Html.DisplayNameFor(Model => Model.EmployeeName): </strong>
+        @Html.DisplayFor(model  => model.EmployeeName)
+    </span>
+</div>
+<div>
+    <span>
+        <strong>@Html.DisplayNameFor(Model => Model.Phone): </strong>
+        @Html.DisplayFor(model => model.Phone)
+    </span>
+</div>
+<div>
+    <span>
+        <strong>@Html.DisplayNameFor(Model => Model.Position): </strong>
+        @Html.DisplayFor(model => model.Position)
+    </span>
+</div>
+<div>
+    <span>
+        <strong>@Html.DisplayNameFor(Model => Model.HireDate): </strong>
+        @Html.DisplayFor(model => model.HireDate)
+    </span>
+</div>
+
+<div><strong>Orders of this employee</strong></div>
+<table class="table">
+    <tr>
+        <th>OrderDate</th>
+        <th>TotalAmount</th>
+        <th>CustomerId</th>
+    </tr>
+    @foreach(Order order in Model.Orders)
+    {        
+        <tr>
+            <td>@order.OrderDate</td>
+            <td>@order.TotalAmount</td>
+            <td>@order.Customer.CustomerName</td>
+        </tr>
+    }
+</table>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

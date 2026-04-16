@@ -1,0 +1,52 @@
+﻿@model IEnumerable<learnApp.Models.Employee>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(Model => Model.EmployeeName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(Model => Model.Phone)
+            </th>
+            <th>
+                @Html.DisplayNameFor(Model => Model.Position)
+            </th>
+            <th>
+                @Html.DisplayNameFor(Model => Model.HireDate)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    @foreach (var employee in Model)
+    {
+        <tbody>
+            <tr>
+                <td>
+                    @Html.DisplayFor(e => employee.EmployeeName)
+                </td>
+                <td>
+                    @Html.DisplayFor(e => employee.Phone)
+                </td>
+                <td>
+                    @Html.DisplayFor(e => employee.Position)
+                </td>
+                <td>
+                    @Html.DisplayFor(e => employee.HireDate)
+                </td>
+                <td>
+                    <a asp-action="Detail" asp-route-id="@employee.EmployeeId">Details</a>|
+                    <a asp-action="Edit" asp-route-id="@employee.EmployeeId">Edit</a>|
+                    <a asp-action="Create">Create</a>
+                    <a asp-action="Delete" asp-route-id="@employee.EmployeeId">Delete</a>
+                </td>
+            </tr>
+        </tbody>
+    }
+</table>

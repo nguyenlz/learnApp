@@ -1,0 +1,20 @@
+﻿@model learnApp.Models.Employee
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Delete employee</h1>
+
+<div>
+    Name: @Model.EmployeeName
+</div>
+<div>
+    Phone: @Model.Phone
+</div>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="EmployeeId"/>
+    <strong>Are you sure?</strong>
+    <button type="submit" class="btn btn-danger">Yes</button>
+</form>
