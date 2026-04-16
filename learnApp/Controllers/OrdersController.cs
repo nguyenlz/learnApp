@@ -74,7 +74,7 @@ namespace learnApp.Controllers
             ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName");
 
             ViewBag.ProductOptions = string.Join("", _context.Products.Select(p =>
-                $"<option value='{p.ProductId}'>{p.ProductName}</option>"
+                $"<option value='{p.ProductId}' data-price='{p.Price}'>{p.ProductName}</option>"
             ));
 
             return View(new OrderCreateViewModel());
@@ -88,6 +88,13 @@ namespace learnApp.Controllers
         public async Task<IActionResult> Create(OrderCreateViewModel model)
         {
             Console.WriteLine("Received Order:");
+            foreach (var state in ModelState)
+            {
+                foreach (var error in state.Value.Errors)
+                {
+                    Console.WriteLine($"Field: {state.Key} - Error: {error.ErrorMessage}");
+                }
+            }
             if (ModelState.IsValid)
             {
                 // 1. Lưu Order
@@ -196,11 +203,21 @@ namespace learnApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders
+                        .Include(o => o.OrderDetails)
+                        .FirstOrDefaultAsync(o => o.OrderId == id);
+
             if (order != null)
             {
-                _context.Orders.Remove(order);
+                _context.OrderDetails.RemoveRange(order.OrderDetails); // xoá con
+                _context.Orders.Remove(order); // xoá cha
+                await _context.SaveChangesAsync();
             }
+            //var order = await _context.Orders.FindAsync(id);
+            //if (order != null)
+            //{
+            //    _context.Orders.Remove(order);
+            //}
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

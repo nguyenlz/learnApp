@@ -7,7 +7,7 @@
 
 <h2>Tạo đơn hàng</h2>
 
-<form asp-action="Create">
+<form asp-action="Create" onsubmit="beforeSubmit()">
     <div class="row">
         <div class="col-md-4">
 
@@ -62,15 +62,26 @@
         let row = `
         <tr>
             <td>
-                <select name="OrderDetails[${index}].ProductId" class="form-control">
+                <select name="OrderDetails[${index}].ProductId" class="form-control" onchange="loadPrice(this)">
                     ${getProductOptions()}
                 </select>
             </td>
             <td>
-                <input name="OrderDetails[${index}].Quantity" type="number" class="form-control" value="1" onchange="calculate(this)" />
+                <input name="OrderDetails[${index}].Quantity"
+                   type="number"
+                   step="0.5"
+                   class="form-control"
+                   value="1"
+                   onchange="calculate(this)" />
             </td>
             <td>
-                <input name="OrderDetails[${index}].UnitPrice" type="number" class="form-control" value="0" onchange="calculate(this)" />
+                <input name="OrderDetails[${index}].UnitPrice"
+                   type="text"
+                   class="form-control"
+                   value="0"
+                   onfocus="unformatPrice(this)"
+                   onblur="formatPrice(this)"
+                   onchange="calculate(this)" />
             </td>
             <td class="total">0</td>
             <td>
@@ -88,14 +99,62 @@
 
     function calculate(input) {
         let row = input.closest('tr');
-        let qty = row.querySelector('[name*="Quantity"]').value;
-        let price = row.querySelector('[name*="UnitPrice"]').value;
+
+        let qty = parseFloat(
+            row.querySelector('[name*="Quantity"]').value
+        ) || 0;
+
+        let price = parseInt(
+            row.querySelector('[name*="UnitPrice"]').value.replace(/\./g, '')
+        ) || 0;
+
         let total = qty * price;
-        row.querySelector('.total').innerText = total.toLocaleString('vi-VN');
+
+        row.querySelector('.total').innerText =
+            total.toLocaleString('vi-VN') + ' ₫';
+    }
+
+    function loadPrice(select) {
+        let row = select.closest('tr');
+
+        let price = parseInt(
+            select.options[select.selectedIndex].getAttribute("data-price")
+        ) || 0;
+
+        let priceInput = row.querySelector('[name*="UnitPrice"]');
+
+        // set raw value trước
+        priceInput.value = price;
+
+        // format lại cho đẹp
+        formatPrice(priceInput);
+
+        calculate(priceInput);
+    }
+
+    function formatPrice(input) {
+        let value = parseInt(input.value.replace(/\./g, '')) || 0;
+        input.value = value.toLocaleString('vi-VN'); // 1400 -> 1.400
+    }
+
+    function unformatPrice(input) {
+        input.value = input.value.replace(/\./g, ''); // 1.400 -> 1400
     }
 
     function getProductOptions() {
         return `@Html.Raw(ViewBag.ProductOptions)`;
+    }
+
+    function beforeSubmit() {
+        // bỏ dấu . của tiền
+        document.querySelectorAll('[name*="UnitPrice"]').forEach(input => {
+            input.value = input.value.replace(/\./g, '');
+        });
+
+        // chuẩn hoá số lẻ
+        document.querySelectorAll('[name*="Quantity"]').forEach(input => {
+            input.value = input.value.replace(',', '.');
+        });
     }
 </script>
 }

@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection2");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection1");
 builder.Services.AddDbContext<VlxdContext>(options =>
 options.UseSqlServer(connectionString));
 

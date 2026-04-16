@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System;
 using System.Collections.Generic;
 
 namespace learnApp.Models;
@@ -18,12 +19,12 @@ public partial class Product
     public decimal? Price { get; set; }
 
     public int? StockQuantity { get; set; }
-
+    [ValidateNever]
     public virtual Category Category { get; set; } = null!;
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
     public virtual ICollection<StockImportDetail> StockImportDetails { get; set; } = new List<StockImportDetail>();
-
+    [ValidateNever]
     public virtual Supplier Supplier { get; set; } = null!;
 }
