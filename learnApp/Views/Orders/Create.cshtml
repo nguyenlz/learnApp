@@ -1,41 +1,101 @@
-﻿@model learnApp.Models.Order
+﻿@model OrderCreateViewModel
+@using learnApp.Helper
 
 @{
     ViewData["Title"] = "Create";
 }
 
-<h1>Create</h1>
+<h2>Tạo đơn hàng</h2>
 
-<h4>Order</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<form asp-action="Create">
+    <div class="row">
+        <div class="col-md-4">
+
             <div class="form-group">
-                <label asp-for="CustomerId" class="control-label"></label>
-                <select asp-for="CustomerId" class ="form-control" asp-items="ViewBag.CustomerId"></select>
+                <label>Khách hàng</label>
+                <select asp-for="Order.CustomerId" class="form-control" asp-items="ViewBag.CustomerId"></select>
             </div>
+
             <div class="form-group">
-                <label asp-for="EmployeeId" class="control-label"></label>
-                <select asp-for="EmployeeId" class ="form-control" asp-items="ViewBag.EmployeeId"></select>
+                <label>Nhân viên</label>
+                <select asp-for="Order.EmployeeId" class="form-control" asp-items="ViewBag.EmployeeId"></select>
             </div>
+
             <div class="form-group">
-                <label asp-for="TotalAmount" class="control-label"></label>
-                <input asp-for="TotalAmount" class="form-control" />
-                <span asp-validation-for="TotalAmount" class="text-danger"></span>
+                <label>Ngày</label>
+                <input asp-for="Order.OrderDate" type="date" class="form-control" />
             </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+
+        </div>
     </div>
-</div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+    <hr />
+
+    <h4>Danh sách sản phẩm</h4>
+
+    <table class="table" id="orderDetailsTable">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Số lượng</th>
+                <th>Giá</th>
+                <th>Thành tiền</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <button type="button" class="btn btn-success" onclick="addRow()">+ Thêm sản phẩm</button>
+
+    <hr />
+
+    <button type="submit" class="btn btn-primary">Lưu đơn</button>
+</form>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+<script>
+    let index = 0;
+
+    function addRow() {
+        let row = `
+        <tr>
+            <td>
+                <select name="OrderDetails[${index}].ProductId" class="form-control">
+                    ${getProductOptions()}
+                </select>
+            </td>
+            <td>
+                <input name="OrderDetails[${index}].Quantity" type="number" class="form-control" value="1" onchange="calculate(this)" />
+            </td>
+            <td>
+                <input name="OrderDetails[${index}].UnitPrice" type="number" class="form-control" value="0" onchange="calculate(this)" />
+            </td>
+            <td class="total">0</td>
+            <td>
+                <button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button>
+            </td>
+        </tr>
+        `;
+        document.querySelector("#orderDetailsTable tbody").insertAdjacentHTML('beforeend', row);
+        index++;
+    }
+
+    function removeRow(btn) {
+        btn.closest('tr').remove();
+    }
+
+    function calculate(input) {
+        let row = input.closest('tr');
+        let qty = row.querySelector('[name*="Quantity"]').value;
+        let price = row.querySelector('[name*="UnitPrice"]').value;
+        let total = qty * price;
+        row.querySelector('.total').innerText = total.toLocaleString('vi-VN');
+    }
+
+    function getProductOptions() {
+        return `@Html.Raw(ViewBag.ProductOptions)`;
+    }
+</script>
 }

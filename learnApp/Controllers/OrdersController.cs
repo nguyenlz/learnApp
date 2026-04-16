@@ -70,9 +70,14 @@ namespace learnApp.Controllers
         // GET: Orders/Create
         public IActionResult Create()
         {
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId");
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId");
-            return View();
+            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerName");
+            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName");
+
+            ViewBag.ProductOptions = string.Join("", _context.Products.Select(p =>
+                $"<option value='{p.ProductId}'>{p.ProductName}</option>"
+            ));
+
+            return View(new OrderCreateViewModel());
         }
 
         // POST: Orders/Create
@@ -80,17 +85,35 @@ namespace learnApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("OrderId,CustomerId,EmployeeId,OrderDate,TotalAmount")] Order order)
+        public async Task<IActionResult> Create(OrderCreateViewModel model)
         {
+            Console.WriteLine("Received Order:");
             if (ModelState.IsValid)
             {
-                _context.Add(order);
+                // 1. Lưu Order
+                Console.WriteLine($"Order: CustomerId={model.Order.CustomerId}, EmployeeId={model.Order.EmployeeId}, OrderDate={model.Order.OrderDate}");
+                _context.Orders.Add(model.Order);
                 await _context.SaveChangesAsync();
+
+                decimal total = 0;
+
+                // 2. Lưu OrderDetail
+                Console.WriteLine("Order Details:");
+                foreach (var item in model.OrderDetails)
+                {
+                    item.OrderId = model.Order.OrderId;
+                    total += item.Quantity * item.UnitPrice;
+                    _context.OrderDetails.Add(item);
+                }
+
+                // 3. Update TotalAmount
+                model.Order.TotalAmount = total;
+                await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", order.CustomerId);
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId", order.EmployeeId);
-            return View(order);
+
+            return View(model);
         }
 
         // GET: Orders/Edit/5
