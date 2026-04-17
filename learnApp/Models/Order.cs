@@ -28,6 +28,7 @@ public partial class Order
     public virtual Customer Customer { get; set; } = null!;
     [ValidateNever]
     public virtual Employee Employee { get; set; } = null!;
+    [ValidateNever]
     public virtual Site Site { get; set; }
     [ValidateNever]
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
