@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace learnApp.Models;
 
@@ -11,7 +12,7 @@ public partial class Order
     public int CustomerId { get; set; }
 
     public int EmployeeId { get; set; }
-
+    [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy HH:mm}")]
     public DateTime? OrderDate { get; set; }
 
     public decimal? TotalAmount { get; set; }

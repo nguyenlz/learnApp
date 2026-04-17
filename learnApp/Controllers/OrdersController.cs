@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using learnApp.Models;
+﻿using learnApp.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Rotativa.AspNetCore;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace learnApp.Controllers
 {
@@ -20,11 +22,31 @@ namespace learnApp.Controllers
         }
 
         // GET: Orders
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, string searchbarinput = "")
         {
-            var vlxdContext = _context.Orders.
-                Include(o => o.Customer).
-                Include(o => o.Employee);
+            var vlxdContext = _context.Orders
+                        .Include(o => o.Customer)
+                        .Include(o => o.Employee)
+                        .AsQueryable();
+
+            if (fromDate.HasValue)
+            {
+                vlxdContext = vlxdContext.Where(o => o.OrderDate >= fromDate.Value);
+            }
+
+            if (toDate.HasValue)
+            {
+                vlxdContext = vlxdContext.Where(o => o.OrderDate <= toDate.Value);
+            }
+
+            if (!string.IsNullOrEmpty(searchbarinput))
+            {
+                vlxdContext = vlxdContext.Where(o =>
+                    (o.Customer.CustomerName != null && o.Customer.CustomerName.Contains(searchbarinput)) ||
+                    (o.Employee.EmployeeName != null && o.Employee.EmployeeName.Contains(searchbarinput))
+                );
+            }
+
             return View(await vlxdContext.ToListAsync());
         }
 
