@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using learnApp.Models;
 
 namespace learnApp.Models;
 
@@ -204,8 +205,17 @@ public partial class VlxdContext : DbContext
             entity.Property(e => e.SupplierName).HasMaxLength(150);
         });
 
+        modelBuilder.Entity<Payment>()
+        .HasOne(p => p.Order)
+        .WithMany(o => o.Payments)
+        .HasForeignKey(p => p.OrderId);
+
         OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+
+public DbSet<learnApp.Models.Payment> Payments { get; set; } = default!;
+
+public DbSet<learnApp.Models.Site> Sites { get; set; } = default!;
 }

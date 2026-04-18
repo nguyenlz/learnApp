@@ -16,7 +16,6 @@ public partial class Order
     public DateTime? OrderDate { get; set; }
 
     public decimal TotalAmount { get; set; }
-    public decimal PaidAmount { get; set; } = 0;
 
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
@@ -32,5 +31,17 @@ public partial class Order
     public virtual Site Site { get; set; }
     [ValidateNever]
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+    [ValidateNever]
+    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public void UpdatePaymentStatus()
+    {
+        var paid = Payments.Sum(p => p.Amount);
 
+        if (paid == 0)
+            PaymentStatus = PaymentStatus.Unpaid;
+        else if (paid < TotalAmount)
+            PaymentStatus = PaymentStatus.Partial;
+        else
+            PaymentStatus = PaymentStatus.Paid;
+    }
 }

@@ -1,13 +1,12 @@
 ﻿@model learnApp.Models.Order
 @using learnApp.Helper
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Chi tiết HĐ";
 }
 
-<h1>Details</h1>
+<h1>Chi tiết hóa đơn</h1>
 
 <div>
-    <h4>Order</h4>
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
@@ -23,6 +22,18 @@
             @CurrencyHelper.ToVnd(Model.TotalAmount)
             @* @Html.DisplayFor(model => model.TotalAmount) *@
         </dd>
+        <dt class="col-sm-2">Đã thanh toán</dt>
+        <dd class="col-sm-10">
+            @CurrencyHelper.ToVnd(Model.Payments.Sum(p => p.Amount))
+        </dd>
+        <dt class="col-sm-2">Còn nợ</dt>
+        <dd class="col-sm-10">
+            @CurrencyHelper.ToVnd(Model.TotalAmount - Model.Payments.Sum(p => p.Amount))
+        </dd>
+        <dt class="col-sm-2">Trạng thái</dt>
+        <dd class="col-sm-10">
+            @Model.PaymentStatus
+        </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.Customer)
         </dt>
@@ -36,21 +47,46 @@
             @Html.DisplayFor(model => model.Employee.EmployeeName)
         </dd>
     </dl>
-    <h4>Order Detail</h4>
+    <h4>Sản phẩm đã đặt</h4>
+    <hr />
     <table class="table">
         <tr>
-            <th>Product Name</th>
-            <th>Quantity</th>
-            <th>UnitPrice</th>
+            <th>Tên khách hàng</th>
+            <th>Số lượng</th>
+            <th>Đơn giá</th>
             <th>Thành tiền</th>
         </tr>
+        @{
+            decimal total = 0;
+        }
         @foreach(OrderDetail item in Model.OrderDetails)
         {
+            var thanhTien = item.Quantity * item.UnitPrice;
+            total += thanhTien;
             <tr>
                 <td>@item.Product.ProductName</td>
                 <td>@item.Quantity</td>
                 <td>@CurrencyHelper.ToVnd(item.UnitPrice)</td>
-                <td>@CurrencyHelper.ToVnd(item.Quantity * item.UnitPrice)</td>
+                <td>@CurrencyHelper.ToVnd(thanhTien)</td>
+            </tr>
+        }
+        <tr>
+            <td colspan="3" class="text-end"><strong>Tổng tiền:</strong></td>
+            <td><strong>@CurrencyHelper.ToVnd(total)</strong></td>
+        </tr>
+    </table>
+    <h4>Lịch sử thanh toán</h4>
+    <table class="table">
+        <tr>
+            <th>Ngày</th>
+            <th>Số tiền</th>
+        </tr>
+
+        @foreach (var p in Model.Payments.OrderByDescending(p => p.PaymentDate))
+        {
+            <tr>
+                <td>@p.PaymentDate.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@CurrencyHelper.ToVnd(p.Amount)</td>
             </tr>
         }
     </table>
@@ -59,6 +95,12 @@
     <a asp-action="Edit" asp-route-id="@Model?.OrderId">Edit</a> |
     <a asp-action="Print" asp-route-id="@Model.OrderId" class="btn btn-success">
         In hóa đơn
+    </a> |
+    <a asp-controller="Payments"
+           asp-action="Create"
+           asp-route-orderId="@Model.OrderId"
+           class="btn btn-warning">
+        Thanh toán
     </a> |
     <a asp-action="Index">Back to List</a>
 </div>
