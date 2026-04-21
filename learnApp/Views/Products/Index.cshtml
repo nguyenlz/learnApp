@@ -1,5 +1,5 @@
 ﻿@model IEnumerable<learnApp.Models.Product>
-
+@using learnApp.Helper
 @{
     ViewData["Title"] = "Index";
 }
@@ -43,7 +43,7 @@
                 @Html.DisplayFor(modelItem => item.Unit)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Price)
+                @CurrencyHelper.ToVnd(item.Price)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.StockQuantity)

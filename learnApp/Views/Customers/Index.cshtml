@@ -1,6 +1,8 @@
 ﻿@model IEnumerable<learnApp.Models.Customer>
 
-@ViewData["Title"] = "Index";
+@{
+    ViewData["Title"] = "Index";
+}
 
 <h1>Index</h1>
 
@@ -22,6 +24,9 @@
             <th>
                 @Html.DisplayNameFor(model => model.Email)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Type)
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -39,6 +44,9 @@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Email)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Type)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.CustomerId">Edit</a> |

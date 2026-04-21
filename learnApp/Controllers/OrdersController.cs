@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using learnApp.Models;
+﻿using learnApp.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Rotativa.AspNetCore;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace learnApp.Controllers
 {
@@ -20,11 +22,31 @@ namespace learnApp.Controllers
         }
 
         // GET: Orders
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, string searchbarinput = "")
         {
-            var vlxdContext = _context.Orders.
-                Include(o => o.Customer).
-                Include(o => o.Employee);
+            var vlxdContext = _context.Orders
+                        .Include(o => o.Customer)
+                        .Include(o => o.Employee)
+                        .AsQueryable();
+
+            if (fromDate.HasValue)
+            {
+                vlxdContext = vlxdContext.Where(o => o.OrderDate >= fromDate.Value);
+            }
+
+            if (toDate.HasValue)
+            {
+                vlxdContext = vlxdContext.Where(o => o.OrderDate <= toDate.Value);
+            }
+
+            if (!string.IsNullOrEmpty(searchbarinput))
+            {
+                vlxdContext = vlxdContext.Where(o =>
+                    (o.Customer.CustomerName != null && o.Customer.CustomerName.Contains(searchbarinput)) ||
+                    (o.Employee.EmployeeName != null && o.Employee.EmployeeName.Contains(searchbarinput))
+                );
+            }
+
             return View(await vlxdContext.ToListAsync());
         }
 
@@ -70,9 +92,14 @@ namespace learnApp.Controllers
         // GET: Orders/Create
         public IActionResult Create()
         {
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId");
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId");
-            return View();
+            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerName");
+            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName");
+
+            ViewBag.ProductOptions = string.Join("", _context.Products.Select(p =>
+                $"<option value='{p.ProductId}' data-price='{p.Price}'>{p.ProductName}</option>"
+            ));
+
+            return View(new OrderCreateViewModel());
         }
 
         // POST: Orders/Create
@@ -80,17 +107,42 @@ namespace learnApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("OrderId,CustomerId,EmployeeId,OrderDate,TotalAmount")] Order order)
+        public async Task<IActionResult> Create(OrderCreateViewModel model)
         {
+            Console.WriteLine("Received Order:");
+            foreach (var state in ModelState)
+            {
+                foreach (var error in state.Value.Errors)
+                {
+                    Console.WriteLine($"Field: {state.Key} - Error: {error.ErrorMessage}");
+                }
+            }
             if (ModelState.IsValid)
             {
-                _context.Add(order);
+                // 1. Lưu Order
+                Console.WriteLine($"Order: CustomerId={model.Order.CustomerId}, EmployeeId={model.Order.EmployeeId}, OrderDate={model.Order.OrderDate}");
+                _context.Orders.Add(model.Order);
                 await _context.SaveChangesAsync();
+
+                decimal total = 0;
+
+                // 2. Lưu OrderDetail
+                Console.WriteLine("Order Details:");
+                foreach (var item in model.OrderDetails)
+                {
+                    item.OrderId = model.Order.OrderId;
+                    total += item.Quantity * item.UnitPrice;
+                    _context.OrderDetails.Add(item);
+                }
+
+                // 3. Update TotalAmount
+                model.Order.TotalAmount = total;
+                await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", order.CustomerId);
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId", order.EmployeeId);
-            return View(order);
+
+            return View(model);
         }
 
         // GET: Orders/Edit/5
@@ -173,11 +225,21 @@ namespace learnApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders
+                        .Include(o => o.OrderDetails)
+                        .FirstOrDefaultAsync(o => o.OrderId == id);
+
             if (order != null)
             {
-                _context.Orders.Remove(order);
+                _context.OrderDetails.RemoveRange(order.OrderDetails); // xoá con
+                _context.Orders.Remove(order); // xoá cha
+                await _context.SaveChangesAsync();
             }
+            //var order = await _context.Orders.FindAsync(id);
+            //if (order != null)
+            //{
+            //    _context.Orders.Remove(order);
+            //}
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

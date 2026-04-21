@@ -2,28 +2,83 @@
 @using learnApp.Helper
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Đơn hàng";
 }
 
-<h1>Index</h1>
+<h2>Tìm kiếm đơn hàng</h2>
+<form asp-action="Index" method="get" class="card shadow-sm p-3 mb-3">
 
+    <!-- SEARCH BAR -->
+    <div class="mb-3">
+        <div class="input-group">
+            <input type="search" name="searchbarinput"
+                   value="@Context.Request.Query["searchbarinput"]"
+                   class="form-control"
+                   placeholder="Tìm theo mã đơn, tên khách hàng..." />
+
+            <button type="submit" class="btn btn-primary px-4">
+                <i class="fa-solid fa-magnifying-glass"></i> Tìm
+            </button>
+        </div>
+    </div>
+
+    <!-- FILTER ROW -->
+    <div class="row g-3 align-items-end">
+
+        <!-- FROM DATE -->
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Từ ngày</label>
+            <input type="date" name="fromDate"
+                   value="@Context.Request.Query["fromDate"]"
+                   class="form-control" />
+        </div>
+
+        <!-- TO DATE -->
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Đến ngày</label>
+            <input type="date" name="toDate"
+                   value="@Context.Request.Query["toDate"]"
+                   class="form-control" />
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="col-md-4 d-flex gap-2">
+            <button type="submit" class="btn btn-success w-100">
+                Lọc dữ liệu
+            </button>
+
+            <a asp-action="Index" class="btn btn-outline-secondary w-100">
+                Reset
+            </a>
+        </div>
+
+    </div>
+</form>
+<br />
+<h2>Danh sách các đơn hàng</h2>
 <p>
-    <a asp-action="Create">Create New</a>
+    <a asp-action="Create" class="btn btn-primary">Thêm đơn hàng</a>
 </p>
 <table class="table">
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.OrderDate)
+                Ngày đặt hàng
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.TotalAmount)
+                Tên khách hàng
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Customer)
+                Tổng tiền
+            </th>            
+            <th>
+                Nhân viên lập hóa đơn
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Employee)
+                Trạng thái
+            </th>
+            <th>
+                Thanh toán
             </th>
             <th></th>
         </tr>
@@ -35,19 +90,25 @@
                 @Html.DisplayFor(modelItem => item.OrderDate)
             </td>
             <td>
-                @CurrencyHelper.ToVnd(item.TotalAmount)
-                @* @Html.DisplayFor(modelItem => item.TotalAmount) *@
-            </td>
-            <td>
                 @Html.DisplayFor(modelItem => item.Customer.CustomerName)
             </td>
+            <td>
+                @CurrencyHelper.ToVnd(item.TotalAmount)
+                @* @Html.DisplayFor(modelItem => item.TotalAmount) *@
+            </td>            
             <td>
                 @Html.DisplayFor(modelItem => item.Employee.EmployeeName)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.OrderId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.OrderId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.OrderId">Delete</a>
+                @Html.DisplayFor(modelItem => item.Status)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PaymentStatus)
+            </td>
+            <td>
+                @* <a asp-action="Edit" asp-route-id="@item.OrderId">Edit</a> | *@
+                <a asp-action="Details" asp-route-id="@item.OrderId">Xem</a> |
+                <a asp-action="Delete" asp-route-id="@item.OrderId">Xóa</a>
             </td>
         </tr>
 }
