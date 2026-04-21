@@ -201,6 +201,42 @@ namespace learnApp.Controllers
             return View(order);
         }
 
+        public async Task<IActionResult> Summary(int customerId)
+        {
+            if (customerId == 0)
+                return BadRequest();
+
+            //var from = fromDate ?? DateTime.Today.AddDays(-30);
+            //var to = toDate ?? DateTime.Today;
+
+            var orders = await _context.Orders
+                .Where(o => o.CustomerId == customerId)
+                    //&& o.OrderDate >= from
+                    //&& o.OrderDate <= to)
+                .Include(o => o.Customer)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .ToListAsync();
+
+            var customerName = orders.FirstOrDefault()?.Customer?.CustomerName ?? "";
+
+            var total = orders
+                .SelectMany(o => o.OrderDetails)
+                .Sum(od => od.Quantity * od.UnitPrice);
+
+            var vm = new OrderSummaryViewModel
+            {
+                CustomerId = customerId,
+                CustomerName = customerName,
+                //FromDate = from,
+                //ToDate = to,
+                Orders = orders,
+                TotalAmount = total
+            };
+
+            return View(vm);
+        }
+
         // GET: Orders/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
