@@ -9,16 +9,16 @@ namespace learnApp.Models;
 public partial class Order
 {
     public int OrderId { get; set; }
-
     public int CustomerId { get; set; }
     public int EmployeeId { get; set; }
+    [Display(Name = "Ngày đặt hàng")]
     [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy HH:mm}")]
     public DateTime? OrderDate { get; set; }
-
+    [Display(Name = "Tổng tiền")]
     public decimal TotalAmount { get; set; }
-
+    [Display(Name = "Trạng thái đơn hàng")]
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
-
+    [Display(Name = "Trạng thái thanh toán")]
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
 
     // (optional) công trình

@@ -51,7 +51,7 @@
     <hr />
     <table class="table">
         <tr>
-            <th>Tên khách hàng</th>
+            <th>Tên sản phẩm</th>
             <th>Số lượng</th>
             <th>Đơn giá</th>
             <th>Thành tiền</th>
@@ -81,7 +81,12 @@
             <th>Ngày</th>
             <th>Số tiền</th>
         </tr>
-
+        @if(!Model.Payments.Any())
+        {
+            <tr>
+                <td colspan="2" class="text-center">Chưa có lịch sử thanh toán</td>
+            </tr>
+        }
         @foreach (var p in Model.Payments.OrderByDescending(p => p.PaymentDate))
         {
             <tr>
