@@ -2,12 +2,10 @@
 
 namespace learnApp.Models
 {
-    public class Payment
+    public class PaymentCreateViewModel
     {
-        public int PaymentId { get; set; }
         public int OrderId { get; set; }
         public decimal Amount { get; set; }
-        public DateTime PaymentDate { get; set; }
         [ValidateNever]
         public Order Order { get; set; }
     }

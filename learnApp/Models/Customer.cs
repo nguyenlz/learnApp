@@ -1,13 +1,14 @@
 ﻿using learnApp.Enums;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace learnApp.Models;
 
 public partial class Customer
 {
     public int CustomerId { get; set; }
-
+    [DisplayName("Tên khách hàng")]
     public string CustomerName { get; set; } = null!;
 
     public string? Phone { get; set; }

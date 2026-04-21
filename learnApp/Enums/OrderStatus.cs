@@ -1,11 +1,19 @@
-﻿namespace learnApp.Enums
+﻿using System.ComponentModel.DataAnnotations;
+
+public enum OrderStatus
 {
-    public enum OrderStatus
-    {
-        Pending = 0,
-        Confirmed = 1,
-        Delivering = 2,
-        Completed = 3,
-        Cancelled = 4
-    }
+    [Display(Name = "Chờ xác nhận")]
+    Pending = 0,
+
+    [Display(Name = "Đã xác nhận")]
+    Confirmed = 1,
+
+    [Display(Name = "Đang giao")]
+    Delivering = 2,
+
+    [Display(Name = "Hoàn thành")]
+    Completed = 3,
+
+    [Display(Name = "Đã hủy")]
+    Cancelled = 4
 }

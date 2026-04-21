@@ -24,6 +24,7 @@ namespace learnApp.Controllers
         // GET: Orders
         public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, string searchbarinput = "")
         {
+            
             var vlxdContext = _context.Orders
                         .Include(o => o.Customer)
                         .Include(o => o.Employee)
@@ -61,8 +62,8 @@ namespace learnApp.Controllers
             var order = await _context.Orders
                 .Include(o => o.Customer)
                 .Include(o => o.Employee)
-                .Include(o => o.OrderDetails)
-                    .ThenInclude(od => od.Product)
+                .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
+                .Include(o => o.Payments)
                 .FirstOrDefaultAsync(m => m.OrderId == id);
             if (order == null)
             {

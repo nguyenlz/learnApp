@@ -1,0 +1,38 @@
+﻿@model learnApp.Models.PaymentCreateViewModel
+@using learnApp.Helper
+
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<h4>Thông tin đơn hàng</h4>
+<p>Khách: @Model.Order.Customer.CustomerName</p>
+<p>Tổng tiền: @CurrencyHelper.ToVnd(Model.Order.TotalAmount)</p>
+<p>Đã trả: @CurrencyHelper.ToVnd(Model.Order.Payments.Sum(p => p.Amount))</p>
+<p>Còn nợ: @CurrencyHelper.ToVnd(Model.Order.TotalAmount - Model.Order.Payments.Sum(p => p.Amount))</p>
+
+<h4>Thanh toán</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create" method="post">
+            <input type="hidden" asp-for="OrderId" />
+
+            <div class="form-group">
+                <label>Số tiền thanh toán</label>
+                <input asp-for="Amount" class="form-control" />
+                <span asp-validation-for="Amount" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Thanh toán</button>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
