@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using learnApp.Enums;
+using learnApp.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using learnApp.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace learnApp.Controllers
 {
@@ -45,6 +46,7 @@ namespace learnApp.Controllers
         // GET: Customers/Create
         public IActionResult Create()
         {
+            ViewBag.Type = new SelectList(Enum.GetValues(typeof(CustomerType)));
             return View();
         }
 
@@ -53,7 +55,7 @@ namespace learnApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("CustomerId,CustomerName,Phone,Address,Email")] Customer customer)
+        public async Task<IActionResult> Create([Bind("CustomerId,CustomerName,Phone,Address,Email,Type")] Customer customer)
         {
             if (ModelState.IsValid)
             {
@@ -61,6 +63,7 @@ namespace learnApp.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            ViewBag.Type = new SelectList(Enum.GetValues(typeof(CustomerType)), customer.Type);
             return View(customer);
         }
 
@@ -77,6 +80,7 @@ namespace learnApp.Controllers
             {
                 return NotFound();
             }
+            ViewBag.Type = new SelectList(Enum.GetValues(typeof(CustomerType)), customer.Type);
             return View(customer);
         }
 
@@ -85,7 +89,7 @@ namespace learnApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CustomerId,CustomerName,Phone,Address,Email")] Customer customer)
+        public async Task<IActionResult> Edit(int id, [Bind("CustomerId,CustomerName,Phone,Address,Email,Type")] Customer customer)
         {
             if (id != customer.CustomerId)
             {
@@ -112,6 +116,7 @@ namespace learnApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            ViewBag.Type = new SelectList(Enum.GetValues(typeof(CustomerType)), customer.Type);
             return View(customer);
         }
 

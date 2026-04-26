@@ -33,10 +33,14 @@ public partial class VlxdContext : DbContext
     public virtual DbSet<StockImportDetail> StockImportDetails { get; set; }
 
     public virtual DbSet<Supplier> Suppliers { get; set; }
+    public DbSet<Payment> Payments { get; set; } = default!;
+    public DbSet<Site> Sites { get; set; } = default!;
+    public DbSet<SupplierPayment> SupplierPayments { get; set; } = default!;
 
-//    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-//        => optionsBuilder.UseSqlServer("Server=DESKTOP-B98ANRQ\\SQLEXPRESS;Database=VLXD;Trusted_Connection=True;TrustServerCertificate=true");
+
+    //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+    //        => optionsBuilder.UseSqlServer("Server=DESKTOP-B98ANRQ\\SQLEXPRESS;Database=VLXD;Trusted_Connection=True;TrustServerCertificate=true");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -110,7 +114,8 @@ public partial class VlxdContext : DbContext
 
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
             entity.Property(e => e.ProductId).HasColumnName("ProductID");
-            entity.Property(e => e.UnitPrice).HasColumnType("decimal(12, 2)");
+            entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.UnitPrice).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.OrderId)
@@ -131,7 +136,7 @@ public partial class VlxdContext : DbContext
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.Price).HasColumnType("decimal(12, 2)");
             entity.Property(e => e.ProductName).HasMaxLength(150);
-            entity.Property(e => e.StockQuantity).HasDefaultValue(0);
+            entity.Property(e => e.StockQuantity).HasColumnType("decimal(12, 2)");
             entity.Property(e => e.SupplierId).HasColumnName("SupplierID");
             entity.Property(e => e.Unit)
                 .HasMaxLength(50)
@@ -158,6 +163,10 @@ public partial class VlxdContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.SupplierId).HasColumnName("SupplierID");
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.PaidAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.DebtAmount).HasColumnType("decimal(18, 2)");
+
 
             entity.HasOne(d => d.Employee).WithMany(p => p.StockImports)
                 .HasForeignKey(d => d.EmployeeId)
@@ -175,6 +184,7 @@ public partial class VlxdContext : DbContext
 
             entity.Property(e => e.ImportId).HasColumnName("ImportID");
             entity.Property(e => e.ProductId).HasColumnName("ProductID");
+            entity.Property(e => e.Quantity).HasColumnType("decimal(12, 2)");
             entity.Property(e => e.ImportPrice).HasColumnType("decimal(12, 2)");
 
             entity.HasOne(d => d.Import).WithMany(p => p.StockImportDetails)
@@ -205,17 +215,49 @@ public partial class VlxdContext : DbContext
             entity.Property(e => e.SupplierName).HasMaxLength(150);
         });
 
-        modelBuilder.Entity<Payment>()
-        .HasOne(p => p.Order)
-        .WithMany(o => o.Payments)
-        .HasForeignKey(p => p.OrderId);
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.HasKey(e => e.PaymentId);
+
+            entity.Property(e => e.PaymentId).HasColumnName("PaymentID");
+            entity.Property(e => e.OrderId).HasColumnName("OrderID");
+
+            entity.Property(e => e.Amount)
+                .HasColumnType("decimal(18, 2)");
+
+            entity.Property(e => e.PaymentDate)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("getdate()");
+
+            entity.HasOne(p => p.Order)
+                .WithMany(o => o.Payments)
+                .HasForeignKey(p => p.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SupplierPayment>(entity =>
+        {
+            entity.HasKey(e => e.SupplierPaymentId);
+
+            entity.Property(e => e.SupplierPaymentId).HasColumnName("SupplierPaymentId");
+            entity.Property(e => e.SupplierId).HasColumnName("SupplierID");
+
+            entity.Property(e => e.Amount)
+                .HasColumnType("decimal(18, 2)");
+
+            entity.Property(e => e.PaymentDate)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("getdate()");
+
+            entity.HasOne(sp => sp.Supplier)
+                .WithMany(s => s.SupplierPayments)
+                .HasForeignKey(sp => sp.SupplierId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
         OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 
-public DbSet<learnApp.Models.Payment> Payments { get; set; } = default!;
-
-public DbSet<learnApp.Models.Site> Sites { get; set; } = default!;
 }

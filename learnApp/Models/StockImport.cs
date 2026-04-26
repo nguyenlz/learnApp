@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -21,10 +22,10 @@ public partial class StockImport
     public decimal DebtAmount { get; set; } = 0;
 
     public int? EmployeeId { get; set; }
-
+    [ValidateNever]
     public virtual Employee? Employee { get; set; }
-
+    [ValidateNever]
     public virtual ICollection<StockImportDetail> StockImportDetails { get; set; } = new List<StockImportDetail>();
-
+    [ValidateNever]
     public virtual Supplier Supplier { get; set; } = null!;
 }

@@ -112,9 +112,11 @@ VALUES
 (N'Gạch đỏ', 3, 3, N'Viên', 1500, 10000),
 (N'Xi măng Holcim', 1, 1, N'Bao', 100000, 200);
 
-INSERT INTO Products (ProductName, CategoryID, SupplierID, Unit, Price, StockQuantity)
+INSERT INTO Products(ProductName, CategoryID, SupplierID, Unit, Price, StockQuantity)
 VALUES
-(N'Xi măng Nghi Sơn', 1, 1, N'Bao', 93000, 800);
+(N'Xi măng Nghi Sơn', 2, 2, N'Bao', 100000, 0),
+(N'Xi măng Long Sơn', 2, 2, N'Bao', 85000, 0),
+(N'Xi măng SCG', 2, 2, N'Bao', 105000, 0);
 
 INSERT INTO Customers (CustomerName, Phone, Address, Email)
 VALUES

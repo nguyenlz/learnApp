@@ -16,10 +16,10 @@
                 @Html.DisplayNameFor(model => model.ImportDate)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Employee)
+                @Html.DisplayNameFor(model => model.Employee.EmployeeName)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Supplier)
+                @Html.DisplayNameFor(model => model.Supplier.SupplierName)
             </th>
             <th></th>
         </tr>
@@ -31,10 +31,10 @@
                 @Html.DisplayFor(modelItem => item.ImportDate)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Employee.EmployeeId)
+                @Html.DisplayFor(modelItem => item.Employee.EmployeeName)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Supplier.SupplierId)
+                @Html.DisplayFor(modelItem => item.Supplier.SupplierName)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.ImportId">Edit</a> |

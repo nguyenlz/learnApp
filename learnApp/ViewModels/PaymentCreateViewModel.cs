@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+﻿using learnApp.Models;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-namespace learnApp.Models
+namespace learnApp.ViewModels
 {
     public class PaymentCreateViewModel
     {

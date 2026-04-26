@@ -1,4 +1,4 @@
-﻿@model OrderCreateViewModel
+﻿@model learnApp.ViewModels.OrderCreateViewModel
 @using learnApp.Helper
 
 @{
@@ -11,14 +11,23 @@
     <div class="row">
         <div class="col-md-4">
 
-            <div class="form-group">
-                <label>Khách hàng</label>
-                <select asp-for="Order.CustomerId" class="form-control" asp-items="ViewBag.CustomerId"></select>
-            </div>
+            <select asp-for="Order.CustomerId"
+                    class="form-control"
+                    asp-items="ViewBag.CustomerId"
+                    onchange="loadSites(this)">
+                <option value="">-- Chọn khách hàng --</option>
+            </select>
 
             <div class="form-group">
                 <label>Nhân viên</label>
                 <select asp-for="Order.EmployeeId" class="form-control" asp-items="ViewBag.EmployeeId"></select>
+            </div>
+
+            <div class="form-group">
+                <label>Công trình</label>
+                <select asp-for="Order.SiteId" class="form-control" disabled>
+                    <option value="">-- Chọn công trình --</option>
+                </select>
             </div>
 
             <div class="form-group">
@@ -155,6 +164,44 @@
         document.querySelectorAll('[name*="Quantity"]').forEach(input => {
             input.value = input.value.replace(',', '.');
         });
+    }
+
+    function loadSites(select) {
+        let customerId = select.value;
+
+        if (!customerId) return;
+
+        fetch('@Url.Action("GetSitesByCustomer", "Orders")' + '?customerId=' + customerId)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error("Lỗi khi gọi API");
+                }
+                return res.json();
+            })
+            .then(data => {
+                let siteSelect = document.querySelector('[name="Order.SiteId"]');
+
+                // reset dropdown
+                siteSelect.innerHTML = '<option value="">-- Chọn công trình --</option>';
+
+                if (!data || data.length === 0) {
+                    siteSelect.disabled = true;
+                    return;
+                }
+
+                siteSelect.disabled = false;
+
+                data.forEach(site => {
+                    let option = document.createElement("option");
+                    option.value = site.siteId;
+                    option.textContent = site.name;
+                    siteSelect.appendChild(option);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Không load được công trình");
+            });
     }
 </script>
 }

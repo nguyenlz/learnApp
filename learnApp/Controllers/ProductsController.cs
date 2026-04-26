@@ -167,5 +167,18 @@ namespace learnApp.Controllers
         {
             return _context.Products.Any(e => e.ProductId == id);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetProductsBySupplier(int supplierId)
+        {
+            var products = await _context.Products
+                .Where(p => p.SupplierId == supplierId)
+                .Select(p => new {
+                    p.ProductId,
+                    p.ProductName
+                })
+                .ToListAsync();
+
+            return Json(products);
+        }
     }
 }

@@ -12,8 +12,8 @@ using learnApp.Models;
 namespace learnApp.Migrations
 {
     [DbContext(typeof(VlxdContext))]
-    [Migration("20260421024024_AddSupplierPayment")]
-    partial class AddSupplierPayment
+    [Migration("20260426023115_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -184,10 +184,10 @@ namespace learnApp.Migrations
                         .HasColumnName("ProductID");
 
                     b.Property<decimal>("Quantity")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(12, 2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("OrderId", "ProductId")
                         .HasName("PK__OrderDet__08D097C11AF87EFB");
@@ -201,18 +201,22 @@ namespace learnApp.Migrations
                 {
                     b.Property<int>("PaymentId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("PaymentID");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentId"));
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("OrderID");
 
                     b.Property<DateTime>("PaymentDate")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("getdate()");
 
                     b.HasKey("PaymentId");
 
@@ -242,10 +246,8 @@ namespace learnApp.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<int?>("StockQuantity")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
+                    b.Property<decimal?>("StockQuantity")
+                        .HasColumnType("decimal(12, 2)");
 
                     b.Property<int>("SupplierId")
                         .HasColumnType("int")
@@ -299,7 +301,7 @@ namespace learnApp.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ImportId"));
 
                     b.Property<decimal>("DebtAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<int?>("EmployeeId")
                         .HasColumnType("int")
@@ -311,14 +313,14 @@ namespace learnApp.Migrations
                         .HasDefaultValueSql("(getdate())");
 
                     b.Property<decimal>("PaidAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<int>("SupplierId")
                         .HasColumnType("int")
                         .HasColumnName("SupplierID");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("ImportId")
                         .HasName("PK__StockImp__8697678A4251ADFD");
@@ -343,8 +345,8 @@ namespace learnApp.Migrations
                     b.Property<decimal?>("ImportPrice")
                         .HasColumnType("decimal(12, 2)");
 
-                    b.Property<int?>("Quantity")
-                        .HasColumnType("int");
+                    b.Property<decimal?>("Quantity")
+                        .HasColumnType("decimal(12, 2)");
 
                     b.HasKey("ImportId", "ProductId")
                         .HasName("PK__StockImp__4DD7ABE466E9BCBD");
@@ -390,6 +392,34 @@ namespace learnApp.Migrations
                         .HasFilter("[Phone] IS NOT NULL");
 
                     b.ToTable("Suppliers");
+                });
+
+            modelBuilder.Entity("learnApp.Models.SupplierPayment", b =>
+                {
+                    b.Property<int>("SupplierPaymentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("SupplierPaymentId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SupplierPaymentId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTime>("PaymentDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("getdate()");
+
+                    b.Property<int>("SupplierId")
+                        .HasColumnType("int")
+                        .HasColumnName("SupplierID");
+
+                    b.HasKey("SupplierPaymentId");
+
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("SupplierPayments");
                 });
 
             modelBuilder.Entity("learnApp.Models.Order", b =>
@@ -514,6 +544,17 @@ namespace learnApp.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("learnApp.Models.SupplierPayment", b =>
+                {
+                    b.HasOne("learnApp.Models.Supplier", "Supplier")
+                        .WithMany("SupplierPayments")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
+                });
+
             modelBuilder.Entity("learnApp.Models.Category", b =>
                 {
                     b.Navigation("Products");
@@ -560,6 +601,8 @@ namespace learnApp.Migrations
                     b.Navigation("Products");
 
                     b.Navigation("StockImports");
+
+                    b.Navigation("SupplierPayments");
                 });
 #pragma warning restore 612, 618
         }

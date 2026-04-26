@@ -19,7 +19,7 @@ public partial class Product
     [DisplayName("Giá bán")]
     public decimal? Price { get; set; }
     [DisplayName("Số lượng tồn kho")]
-    public int? StockQuantity { get; set; }
+    public decimal? StockQuantity { get; set; }
     [ValidateNever]
     public virtual Category Category { get; set; } = null!;
 

@@ -21,4 +21,5 @@ public partial class Supplier
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 
     public virtual ICollection<StockImport> StockImports { get; set; } = new List<StockImport>();
+    public ICollection<SupplierPayment> SupplierPayments { get; set; } = new List<SupplierPayment>();
 }

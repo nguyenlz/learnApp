@@ -7,7 +7,7 @@ namespace learnApp.Models
     {
         public int SiteId { get; set; }
         [Display(Name = "Tên công trình")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         public int CustomerId { get; set; }
         [ValidateNever]
