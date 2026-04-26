@@ -1,11 +1,11 @@
-﻿@model OrderSummaryViewModel
+﻿@model learnApp.ViewModels.OrderSummaryViewModel
 @using learnApp.Helper
 
 <h2>HÓA ĐƠN TỔNG</h2>
 
 <p><strong>Khách hàng:</strong> @Model.CustomerName</p>
-<p><strong>Từ ngày:</strong> @Model.FromDate.ToString("dd/MM/yyyy")</p>
-<p><strong>Đến ngày:</strong> @Model.ToDate.ToString("dd/MM/yyyy")</p>
+@* <p><strong>Từ ngày:</strong> @Model.FromDate.ToString("dd/MM/yyyy")</p>
+<p><strong>Đến ngày:</strong> @Model.ToDate.ToString("dd/MM/yyyy")</p> *@
 
 <table class="table table-bordered">
     <tr>
@@ -32,7 +32,7 @@
             tong += thanhTien;
 
             <tr>
-                <td>@stt++</td>
+                <td>@stt</td>
                 <td>@order.OrderDate</td>
                 <td>@item.Product.ProductName</td>
                 <td>@item.Product.Unit</td>
@@ -41,6 +41,8 @@
                 <td>@CurrencyHelper.ToVnd(thanhTien)</td>
                 <td></td>
             </tr>
+
+            stt++;
         }
     }
 

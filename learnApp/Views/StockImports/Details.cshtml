@@ -4,10 +4,8 @@
     ViewData["Title"] = "Details";
 }
 
-<h1>Details</h1>
-
 <div>
-    <h4>StockImport</h4>
+    <h4>Phiếu nhập hàng</h4>
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
@@ -30,6 +28,40 @@
         </dd>
     </dl>
 </div>
+
+<hr />
+<h4>Chi tiết phiếu nhập hàng</h4>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.StockImportDetails.First().Product.ProductName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.StockImportDetails.First().Quantity)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.StockImportDetails.First().ImportPrice)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model.StockImportDetails) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Product.ProductName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Quantity)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ImportPrice)
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
 <div>
     <a asp-action="Edit" asp-route-id="@Model?.ImportId">Edit</a> |
     <a asp-action="Index">Back to List</a>

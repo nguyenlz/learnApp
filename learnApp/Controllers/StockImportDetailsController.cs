@@ -26,9 +26,9 @@ namespace learnApp.Controllers
         }
 
         // GET: StockImportDetails/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int? ImportId, int? ProductId)
         {
-            if (id == null)
+            if (ImportId == null || ProductId == null)
             {
                 return NotFound();
             }
@@ -36,7 +36,7 @@ namespace learnApp.Controllers
             var stockImportDetail = await _context.StockImportDetails
                 .Include(s => s.Import)
                 .Include(s => s.Product)
-                .FirstOrDefaultAsync(m => m.ImportId == id);
+                .FirstOrDefaultAsync(m => m.ImportId == ImportId && m.ProductId == ProductId);
             if (stockImportDetail == null)
             {
                 return NotFound();
@@ -72,14 +72,14 @@ namespace learnApp.Controllers
         }
 
         // GET: StockImportDetails/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int? ImportId, int? ProductId)
         {
-            if (id == null)
+            if (ImportId == null || ProductId == null)
             {
                 return NotFound();
             }
 
-            var stockImportDetail = await _context.StockImportDetails.FindAsync(id);
+            var stockImportDetail = await _context.StockImportDetails.FindAsync(ImportId, ProductId);
             if (stockImportDetail == null)
             {
                 return NotFound();
@@ -94,13 +94,17 @@ namespace learnApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ImportId,ProductId,Quantity,ImportPrice")] StockImportDetail stockImportDetail)
+        public async Task<IActionResult> Edit(int ImportId, int ProductId, [Bind("ImportId,ProductId,Quantity,ImportPrice")] StockImportDetail stockImportDetail)
         {
-            if (id != stockImportDetail.ImportId)
-            {
+            if (ImportId != stockImportDetail.ImportId || ProductId != stockImportDetail.ProductId)
                 return NotFound();
+            foreach (var state in ModelState)
+            {
+                foreach (var error in state.Value.Errors)
+                {
+                    Console.WriteLine($"Field: {state.Key} - Error: {error.ErrorMessage}");
+                }
             }
-
             if (ModelState.IsValid)
             {
                 try
@@ -110,14 +114,10 @@ namespace learnApp.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!StockImportDetailExists(stockImportDetail.ImportId))
-                    {
+                    if (!StockImportDetailExists(stockImportDetail.ImportId, stockImportDetail.ProductId))
                         return NotFound();
-                    }
                     else
-                    {
                         throw;
-                    }
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -127,9 +127,9 @@ namespace learnApp.Controllers
         }
 
         // GET: StockImportDetails/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(int? ImportId, int? ProductId)
         {
-            if (id == null)
+            if (ImportId == null || ProductId == null)
             {
                 return NotFound();
             }
@@ -137,7 +137,8 @@ namespace learnApp.Controllers
             var stockImportDetail = await _context.StockImportDetails
                 .Include(s => s.Import)
                 .Include(s => s.Product)
-                .FirstOrDefaultAsync(m => m.ImportId == id);
+                .FirstOrDefaultAsync(m => m.ImportId == ImportId && m.ProductId == ProductId);
+
             if (stockImportDetail == null)
             {
                 return NotFound();
@@ -149,9 +150,9 @@ namespace learnApp.Controllers
         // POST: StockImportDetails/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int ImportId, int ProductId)
         {
-            var stockImportDetail = await _context.StockImportDetails.FindAsync(id);
+            var stockImportDetail = await _context.StockImportDetails.FindAsync(ImportId, ProductId);
             if (stockImportDetail != null)
             {
                 _context.StockImportDetails.Remove(stockImportDetail);
@@ -161,9 +162,9 @@ namespace learnApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private bool StockImportDetailExists(int id)
+        private bool StockImportDetailExists(int ImportId, int ProductId)
         {
-            return _context.StockImportDetails.Any(e => e.ImportId == id);
+            return _context.StockImportDetails.Any(e => e.ImportId == ImportId && e.ProductId == ProductId);
         }
     }
 }

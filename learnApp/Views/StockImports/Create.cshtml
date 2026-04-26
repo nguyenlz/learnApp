@@ -1,36 +1,169 @@
 ﻿@model learnApp.Models.StockImport
 
-@{
-    ViewData["Title"] = "Create";
-}
+<h2>Nhập hàng</h2>
 
-<h1>Create</h1>
+<form asp-action="Create" method="post" onsubmit="beforeSubmit()">
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label>Nhà cung cấp</label>
+            <select asp-for="SupplierId" class="form-control" asp-items="ViewBag.SupplierId" onchange="onSupplierChange()">
+                <option value="">-- Chọn nhà cung cấp --</option>
+            </select>
+        </div>
 
-<h4>StockImport</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="SupplierId" class="control-label"></label>
-                <select asp-for="SupplierId" class ="form-control" asp-items="ViewBag.SupplierId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="EmployeeId" class="control-label"></label>
-                <select asp-for="EmployeeId" class ="form-control" asp-items="ViewBag.EmployeeId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        <div class="col-md-4">
+            <label>Nhân viên</label>
+            <select asp-for="EmployeeId" class="form-control" asp-items="ViewBag.EmployeeId"></select>
+        </div>
     </div>
-</div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+    <hr />
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    <h4>Danh sách sản phẩm</h4>
+
+    <table class="table table-bordered" id="productTable">
+        <thead>
+            <tr>
+                <th>Sản phẩm</th>
+                <th>Số lượng</th>
+                <th>Giá nhập</th>
+                <th>Thành tiền</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <button type="button" class="btn btn-success" onclick="addRow()">+ Thêm sản phẩm</button>
+
+    <hr />
+
+    <div class="row">
+        <div class="col-md-4">
+            @* <label>Tổng tiền</label> *@
+            <input asp-for="TotalAmount" class="form-control" id="totalAmount" type="hidden" />
+        </div>
+
+        <div class="col-md-4">
+            @* <label>Đã trả</label> *@
+            <input asp-for="PaidAmount" class="form-control" id="paidAmount" type="hidden" value="0" />
+        </div>
+
+        <div class="col-md-4">
+            @* <label>Còn nợ</label> *@
+            <input asp-for="DebtAmount" class="form-control" id="debtAmount" type="hidden" />
+        </div>
+    </div>
+
+    <br />
+    <button type="submit" class="btn btn-primary">Lưu phiếu nhập</button>
+</form>
+<script>
+    let index = 0;
+    let currentProducts = [];
+
+    function onSupplierChange() {
+        let supplierId = document.getElementById("SupplierId").value;
+
+        fetch(`/Products/GetProductsBySupplier?supplierId=${supplierId}`)
+            .then(res => res.json())
+            .then(data => {
+                currentProducts = data;
+
+                // reset table
+                document.querySelector("#productTable tbody").innerHTML = "";
+                index = 0;
+            });
+    }
+
+    function getProductOptions() {
+        let html = `<option value="">-- Chọn sản phẩm --</option>`;
+
+        currentProducts.forEach(p => {
+            html += `<option value="${p.productId}">${p.productName}</option>`;
+        });
+
+        return html;
+    }
+
+    function addRow() {
+        if (currentProducts.length === 0) {
+            alert("Vui lòng chọn nhà cung cấp trước");
+            return;
+        }
+
+        let row = `
+            <tr>
+                <td>
+                    <select name="StockImportDetails[${index}].ProductId" class="form-control">
+                        ${getProductOptions()}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" name="StockImportDetails[${index}].Quantity" class="form-control" 
+                        value="0" 
+                        oninput="calculateTotal()" />
+                </td>
+                <td>
+                    <input type="number" class="form-control"
+                        name="StockImportDetails[${index}].ImportPrice"                         
+                        value="0"
+                        oninput="calculateTotal()" />
+                </td>
+                <td class="rowTotal">0</td>
+                <td>
+                    <button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button>
+                </td>
+            </tr>
+        `;
+
+        document.querySelector("#productTable tbody").insertAdjacentHTML("beforeend", row);
+        index++;
+
+        calculateTotal();
+    }
+
+    function removeRow(btn) {
+        btn.closest("tr").remove();
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let total = 0;
+
+        document.querySelectorAll("#productTable tbody tr").forEach(row => {
+            let qty = parseFloat(row.querySelector("input[name*='Quantity']").value) || 0;
+            let price = parseFloat(row.querySelector("input[name*='ImportPrice']").value) || 0;
+
+            let rowTotal = qty * price;
+            row.querySelector(".rowTotal").innerText = formatNumber(rowTotal);
+
+            total += rowTotal;
+        });
+
+        document.getElementById("totalAmount").value = total;
+        document.getElementById("debtAmount").value = total;
+
+
+        // let paid = parseFloat(document.getElementById("paidAmount").value) || 0;
+        // let debt = total - paid;
+        // document.getElementById("debtAmount").value = debt;
+    }
+
+    function beforeSubmit() {
+        let rows = document.querySelectorAll("#productTable tbody tr");
+
+        rows.forEach((row, i) => {
+            row.querySelectorAll("select, input").forEach(input => {
+                input.name = input.name.replace(/\[\d+\]/, `[${i}]`);
+            });
+        });
+    }
+    function formatNumber(n) {
+        return n.toLocaleString('vi-VN');
+    }
+
+    function parseNumber(str) {
+        return Number(str.replace(/\./g, '').replace(/,/g, '')) || 0;
+    }
+</script>

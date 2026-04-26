@@ -1,4 +1,6 @@
-﻿namespace learnApp.Models
+﻿using learnApp.Models;
+
+namespace learnApp.ViewModels
 {
     public class OrderCreateViewModel
     {

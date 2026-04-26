@@ -1,4 +1,5 @@
 ﻿using learnApp.Models;
+using learnApp.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,7 @@ namespace learnApp.Controllers
             var vlxdContext = _context.Orders
                         .Include(o => o.Customer)
                         .Include(o => o.Employee)
+                        .Include(o => o.Site)
                         .AsQueryable();
 
             if (fromDate.HasValue)
@@ -44,7 +46,8 @@ namespace learnApp.Controllers
             {
                 vlxdContext = vlxdContext.Where(o =>
                     (o.Customer.CustomerName != null && o.Customer.CustomerName.Contains(searchbarinput)) ||
-                    (o.Employee.EmployeeName != null && o.Employee.EmployeeName.Contains(searchbarinput))
+                    (o.Employee.EmployeeName != null && o.Employee.EmployeeName.Contains(searchbarinput)) ||
+                    (o.Site != null && o.Site.Name != null && o.Site.Name.Contains(searchbarinput))
                 );
             }
 
@@ -95,9 +98,11 @@ namespace learnApp.Controllers
         {
             ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerName");
             ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName");
+            ViewData["SiteId"] = new SelectList(_context.Sites, "SiteId", "Name");
 
-            ViewBag.ProductOptions = string.Join("", _context.Products.Select(p =>
-                $"<option value='{p.ProductId}' data-price='{p.Price}'>{p.ProductName}</option>"
+            ViewBag.ProductOptions = "<option value='' selected disabled>-- Chọn sản phẩm --</option>" +
+                string.Join("", _context.Products.Select(p =>
+                    $"<option value='{p.ProductId}' data-price='{p.Price}'>{p.ProductName}</option>"
             ));
 
             return View(new OrderCreateViewModel());
@@ -144,6 +149,31 @@ namespace learnApp.Controllers
             }
 
             return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult GetSitesByCustomer(int customerId)
+        {
+            var customer = _context.Customers.Find(customerId);
+
+            if (customer == null)
+                return NotFound();
+
+            // chỉ load nếu là nhà thầu
+            if (customer.Type != Enums.CustomerType.Contractor)
+            {
+                return Json(new List<object>());
+            }
+
+            var sites = _context.Sites
+                .Where(s => s.CustomerId == customerId)
+                .Select(s => new {
+                    siteId = s.SiteId,
+                    name = s.Name
+                })
+                .ToList();
+
+            return Json(sites);
         }
 
         // GET: Orders/Edit/5
@@ -201,22 +231,31 @@ namespace learnApp.Controllers
             return View(order);
         }
 
-        public async Task<IActionResult> Summary(int customerId)
+        public async Task<IActionResult> Summary(int? customerId, int? siteId)
         {
-            if (customerId == 0)
+            if (customerId == null && siteId == null)
                 return BadRequest();
 
             //var from = fromDate ?? DateTime.Today.AddDays(-30);
             //var to = toDate ?? DateTime.Today;
 
-            var orders = await _context.Orders
-                .Where(o => o.CustomerId == customerId)
+            var query = _context.Orders
+                //.Where(o => o.CustomerId == customerId && o.SiteId == siteId)
                     //&& o.OrderDate >= from
                     //&& o.OrderDate <= to)
+                .Where(o => o.PaymentStatus != Enums.PaymentStatus.Paid)
                 .Include(o => o.Customer)
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (customerId.HasValue)
+                query = query.Where(o => o.CustomerId == customerId.Value);
+
+            if (siteId.HasValue)
+                query = query.Where(o => o.SiteId == siteId.Value);
+
+            var orders = await query.ToListAsync();
 
             var customerName = orders.FirstOrDefault()?.Customer?.CustomerName ?? "";
 
@@ -226,13 +265,14 @@ namespace learnApp.Controllers
 
             var vm = new OrderSummaryViewModel
             {
-                CustomerId = customerId,
+                CustomerId = customerId ?? 0,
                 CustomerName = customerName,
                 //FromDate = from,
                 //ToDate = to,
+                SiteId = siteId ?? 0,
                 Orders = orders,
                 TotalAmount = total
-            };
+            };  
 
             return View(vm);
         }

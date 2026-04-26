@@ -1,0 +1,68 @@
+﻿@model learnApp.ViewModels.SupplierDebtSummaryViewModel
+@using learnApp.Helper
+
+<h2>Danh sách công nợ theo nhà cung cấp</h2>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Nhà cung cấp</th>
+            <th>Tổng tiền</th>
+            <th>Đã trả</th>
+            <th>Còn nợ</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@Model.SupplierName</td>
+            <td>@Model.TotalAmount.ToString("N0")</td>
+            <td>@Model.PaidAmount.ToString("N0")</td>
+            <td class="text-danger fw-bold">
+                @Model.DebtAmount.ToString("N0")
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<hr />
+<h4>Lịch sử nhập hàng</h4>
+
+@if (Model.StockImports != null && Model.StockImports.Any())
+{
+    @foreach (var import in Model.StockImports)
+    {
+        <div class="card mb-3">
+            <div class="card-header">
+                Ngày nhập: @import.ImportDate?.ToString("dd/MM/yyyy")
+                | Tổng: @import.TotalAmount.ToString("N0")
+                | Nợ: <span class="text-danger">@import.DebtAmount.ToString("N0")</span>
+            </div>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th>Số lượng</th>
+                        <th>Giá nhập</th>
+                        <th>Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var detail in import.StockImportDetails)
+                    {
+                        <tr>
+                            <td>@detail.Product?.ProductName</td>
+                            <td>@detail.Quantity</td>
+                            <td>@CurrencyHelper.ToVnd(detail.ImportPrice)</td>
+                            <td>@CurrencyHelper.ToVnd(detail.Quantity * detail.ImportPrice)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+else
+{
+    <p>Không có dữ liệu nhập hàng</p>
+}

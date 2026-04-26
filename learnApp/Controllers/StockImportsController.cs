@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using learnApp.Models;
+using learnApp.ViewModels;
 
 namespace learnApp.Controllers
 {
@@ -36,6 +37,8 @@ namespace learnApp.Controllers
             var stockImport = await _context.StockImports
                 .Include(s => s.Employee)
                 .Include(s => s.Supplier)
+                .Include(s => s.StockImportDetails)
+                    .ThenInclude(d => d.Product)
                 .FirstOrDefaultAsync(m => m.ImportId == id);
             if (stockImport == null)
             {
@@ -48,8 +51,11 @@ namespace learnApp.Controllers
         // GET: StockImports/Create
         public IActionResult Create()
         {
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId");
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "SupplierId", "SupplierId");
+            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName");
+            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "SupplierId", "SupplierName");
+            ViewBag.Products = _context.Products
+                .Select(p => new { p.ProductId, p.ProductName })
+                .ToList();
             return View();
         }
 
@@ -58,16 +64,47 @@ namespace learnApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ImportId,SupplierId,ImportDate,EmployeeId")] StockImport stockImport)
+        public async Task<IActionResult> Create(StockImport stockImport)
         {
-            if (ModelState.IsValid)
+            foreach(var state in ModelState)
             {
+                foreach (var error in state.Value.Errors)
+                {
+                    Console.WriteLine($"ModelState error in {state.Key}: {error.ErrorMessage}");
+                }
+            }
+            if (ModelState.IsValid)
+            {                
+                decimal total = 0;
+                foreach (var detail in stockImport.StockImportDetails)
+                {
+                    detail.ImportId = stockImport.ImportId;
+
+                    var quantity = detail.Quantity;
+                    var price = detail.ImportPrice;
+                    total += (quantity ?? 0) * (price ?? 0);
+
+                    //_context.StockImportDetails.Add(detail);
+
+                    var product = _context.Products.Find(detail.ProductId);
+                    if (product != null)
+                    {
+                        product.StockQuantity += detail.Quantity;
+                        _context.Products.Update(product);
+                    }
+                }
+
+                stockImport.TotalAmount = total;
+                stockImport.DebtAmount = total;
+                stockImport.PaidAmount = 0;
                 _context.Add(stockImport);
+
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId", stockImport.EmployeeId);
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "SupplierId", "SupplierId", stockImport.SupplierId);
+
+            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName", stockImport.EmployeeId);
+            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "SupplierId", "SupplierName", stockImport.SupplierId);
             return View(stockImport);
         }
 
@@ -84,8 +121,8 @@ namespace learnApp.Controllers
             {
                 return NotFound();
             }
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId", stockImport.EmployeeId);
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "SupplierId", "SupplierId", stockImport.SupplierId);
+            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName", stockImport.EmployeeId);
+            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "SupplierId", "SupplierName", stockImport.SupplierId);
             return View(stockImport);
         }
 
@@ -154,11 +191,58 @@ namespace learnApp.Controllers
             var stockImport = await _context.StockImports.FindAsync(id);
             if (stockImport != null)
             {
+                foreach (var detail in _context.StockImportDetails.Where(d => d.ImportId == id))
+                {
+                    var product = _context.Products.Find(detail.ProductId);
+                    if (product != null)
+                    {
+                        product.StockQuantity -= detail.Quantity;
+                        _context.Products.Update(product);
+                    }
+
+                    _context.StockImportDetails.Remove(detail);
+                }   
+
                 _context.StockImports.Remove(stockImport);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+        public async Task<IActionResult> Summary(int SupplierId)
+        {
+            var imports = _context.StockImports
+                .Where(x => x.SupplierId == SupplierId)
+                .Include(x => x.Supplier)
+                .Include(x => x.StockImportDetails)
+                    .ThenInclude(d => d.Product)
+                .OrderByDescending(x => x.ImportDate)
+                .ToList();
+
+            if (!imports.Any())
+            {
+                return View(new SupplierDebtSummaryViewModel
+                {
+                    SupplierId = SupplierId,
+                    SupplierName = "Không có dữ liệu",
+                    StockImports = new List<StockImport>()
+                });
+            }
+
+            var first = imports.First();
+
+            var summary = new SupplierDebtSummaryViewModel
+            {
+                SupplierId = SupplierId,
+                SupplierName = first.Supplier.SupplierName,
+                TotalAmount = imports.Sum(x => x.TotalAmount),
+                PaidAmount = imports.Sum(x => x.PaidAmount),
+                DebtAmount = imports.Sum(x => x.DebtAmount),
+                StockImports = imports
+            };
+
+
+            return View(summary);
         }
 
         private bool StockImportExists(int id)

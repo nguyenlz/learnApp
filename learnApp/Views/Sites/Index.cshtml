@@ -33,7 +33,13 @@
             <td>
                 <a asp-action="Edit" asp-route-id="@item.SiteId">Edit</a> |
                 <a asp-action="Details" asp-route-id="@item.SiteId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.SiteId">Delete</a>
+                <a asp-action="Delete" asp-route-id="@item.SiteId">Delete</a> | 
+                <a asp-controller="Orders"
+                        asp-action="Summary"
+                        asp-route-siteId="@item.SiteId"
+                        class="btn btn-info btn-sm">
+                    Gom đơn
+                </a>
             </td>
         </tr>
 }
