@@ -36,6 +36,7 @@ public partial class VlxdContext : DbContext
     public DbSet<Payment> Payments { get; set; } = default!;
     public DbSet<Site> Sites { get; set; } = default!;
     public DbSet<SupplierPayment> SupplierPayments { get; set; } = default!;
+    public DbSet<CustomerPayment> CustomerPayments { get; set; } = default!;
 
 
     //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -92,20 +93,36 @@ public partial class VlxdContext : DbContext
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
             entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
+            entity.Property(e => e.SiteId).HasColumnName("SiteID");
+
             entity.Property(e => e.OrderDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.TotalAmount).HasColumnType("decimal(14, 2)");
+            entity.Property(e => e.TotalAmount).HasPrecision(14, 2);
+            entity.Property(e => e.PaidAmount).HasPrecision(14, 2).HasDefaultValue(0);
+            entity.Property(e => e.Status)
+                .HasConversion<int>();
 
-            entity.HasOne(d => d.Customer).WithMany(p => p.Orders)
+            entity.Property(e => e.PaymentStatus)
+                .HasConversion<int>();
+
+            entity.HasOne(d => d.Customer)
+                .WithMany(p => p.Orders)
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Order_Customer");
 
-            entity.HasOne(d => d.Employee).WithMany(p => p.Orders)
+            entity.HasOne(d => d.Employee)
+                .WithMany(p => p.Orders)
                 .HasForeignKey(d => d.EmployeeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Order_Employee");
+
+            entity.HasOne(d => d.Site)
+                .WithMany(p => p.Orders)
+                .HasForeignKey(d => d.SiteId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Order_Site");
         });
 
         modelBuilder.Entity<OrderDetail>(entity =>
@@ -114,8 +131,8 @@ public partial class VlxdContext : DbContext
 
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
             entity.Property(e => e.ProductId).HasColumnName("ProductID");
-            entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.UnitPrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Quantity).HasPrecision(14, 2);
+            entity.Property(e => e.UnitPrice).HasPrecision(14, 2);
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.OrderId)
@@ -220,7 +237,7 @@ public partial class VlxdContext : DbContext
             entity.HasKey(e => e.PaymentId);
 
             entity.Property(e => e.PaymentId).HasColumnName("PaymentID");
-            entity.Property(e => e.OrderId).HasColumnName("OrderID");
+            //entity.Property(e => e.OrderId).HasColumnName("OrderID");
 
             entity.Property(e => e.Amount)
                 .HasColumnType("decimal(18, 2)");
@@ -229,10 +246,10 @@ public partial class VlxdContext : DbContext
                 .HasColumnType("datetime")
                 .HasDefaultValueSql("getdate()");
 
-            entity.HasOne(p => p.Order)
-                .WithMany(o => o.Payments)
-                .HasForeignKey(p => p.OrderId)
-                .OnDelete(DeleteBehavior.Cascade);
+            //entity.HasOne(p => p.Order)
+            //    .WithMany(o => o.Payments)
+            //    .HasForeignKey(p => p.OrderId)
+            //    .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<SupplierPayment>(entity =>
@@ -255,9 +272,31 @@ public partial class VlxdContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<CustomerPayment>(entity =>
+        {
+            entity.HasKey(e => e.CustomerPaymentId);
+
+            entity.Property(e => e.CustomerPaymentId).HasColumnName("CustomerPaymentId");
+            entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
+
+            entity.Property(e => e.Amount)
+                .HasColumnType("decimal(18, 2)");
+
+            entity.Property(e => e.PaymentDate)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("getdate()");
+
+            entity.HasOne(cp => cp.Customer)
+                .WithMany(c => c.CustomerPayments)
+                .HasForeignKey(cp => cp.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+
+public DbSet<learnApp.Models.CustomerPayment> CustomerPayment { get; set; } = default!;
 
 }

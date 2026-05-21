@@ -1,0 +1,112 @@
+﻿@model learnApp.ViewModels.SupplierDebtSummaryViewModel
+@using learnApp.Helper
+
+<h4>Danh sách công nợ theo nhà cung cấp</h4>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Nhà cung cấp</th>
+            <th>Tổng tiền</th>
+            <th>Đã trả</th>
+            <th>Còn nợ</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@Model.SupplierName</td>
+            <td>@Model.TotalAmount.ToString("N0")</td>
+            <td>@Model.PaidAmount.ToString("N0")</td>
+            <td class="text-danger fw-bold">
+                @Model.DebtAmount.ToString("N0")
+            </td>
+            <td>
+                <a asp-controller="SupplierPayments"
+                       asp-action="Create"
+                       asp-route-supplierId="@Model?.SupplierId"
+                       asp-route-debtAmount="@Model?.DebtAmount"
+                       class="btn btn-warning">
+                    Thanh toán
+                </a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<hr />
+<h4>Lịch sử nhập hàng</h4>
+
+@if (Model.StockImports != null && Model.StockImports.Any())
+{
+    
+        @* <div class="card mb-3">
+            <div class="card-header">
+                Ngày nhập: @import.ImportDate?.ToString("dd/MM/yyyy")
+                | Tổng: @import.TotalAmount.ToString("N0")
+                | Nợ: <span class="text-danger">@import.DebtAmount.ToString("N0")</span>
+            </div>            
+        </div> *@
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Ngày nhập</th>
+                <th>Sản phẩm</th>
+                <th>Số lượng</th>
+                <th>Giá nhập</th>
+                <th>Thành tiền</th>
+            </tr>
+        </thead>
+        @foreach (var import in Model.StockImports)
+        {
+            <tbody>
+                @foreach (var detail in import.StockImportDetails)
+                {
+                    <tr>
+                        <td>@import.ImportDate?.ToString("dd/MM/yyyy")</td>
+                        <td>@detail.Product?.ProductName</td>
+                        <td>@detail.Quantity</td>
+                        <td>@CurrencyHelper.ToVnd(detail.ImportPrice)</td>
+                        <td>@CurrencyHelper.ToVnd(detail.Quantity * detail.ImportPrice)</td>
+                    </tr>
+                }
+            </tbody>
+        }       
+        
+    </table>
+    
+}
+else
+{
+    <p>Không có dữ liệu nhập hàng</p>
+}
+
+<hr />
+<h4>Lịch sử thanh toán</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Ngày thanh toán</th>
+            <th>Số tiền</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.SupplierPayments != null && Model.SupplierPayments.Any())
+        {
+            @foreach (var payment in Model.SupplierPayments)
+            {
+                <tr>
+                    <td>@payment.PaymentDate.ToString("dd/MM/yyyy")</td>
+                    <td>@CurrencyHelper.ToVnd(payment.Amount)</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="2">Không có dữ liệu thanh toán</td>
+            </tr>
+        }
+    </tbody>
+</table>

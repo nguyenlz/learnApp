@@ -22,7 +22,7 @@ namespace learnApp.Controllers
         // GET: Payments
         public async Task<IActionResult> Index()
         {
-            var vlxdContext = _context.Payments.Include(p => p.Order);
+            var vlxdContext = _context.Payments;
             return View(await vlxdContext.ToListAsync());
         }
 
@@ -35,7 +35,6 @@ namespace learnApp.Controllers
             }
 
             var payment = await _context.Payments
-                .Include(p => p.Order)
                 .FirstOrDefaultAsync(m => m.PaymentId == id);
             if (payment == null)
             {
@@ -49,20 +48,12 @@ namespace learnApp.Controllers
         public IActionResult Create(int orderId)
         {
             var order = _context.Orders
-                .Include(o => o.Payments)
                 .Include(o => o.Customer)
                 .FirstOrDefault(o => o.OrderId == orderId);
 
-            if (order == null) return NotFound();
+            if (order == null) return NotFound();            
 
-            var vm = new PaymentCreateViewModel
-            {
-                OrderId = orderId,
-                Order = order,
-                Amount = order.TotalAmount - order.Payments.Sum(p => p.Amount) // gợi ý auto fill
-            };
-
-            return View(vm);
+            return View();
         }
 
         // POST: Payments/Create
@@ -72,46 +63,44 @@ namespace learnApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(PaymentCreateViewModel vm)
         {
-            var order = await _context.Orders
-                .Include(o => o.Payments)
-                .FirstOrDefaultAsync(o => o.OrderId == vm.OrderId);
+            //var order = await _context.Orders
+            //    .FirstOrDefaultAsync(o => o.CustomerId == vm.CustomerId);
 
-            if (order == null) return NotFound();
+            //if (order == null) return NotFound();
 
-            var totalPaid = order.Payments.Sum(p => p.Amount);
+            //var totalPaid = order.Payments.Sum(p => p.Amount);
 
-            if (vm.Amount <= 0)
-            {
-                ModelState.AddModelError("", "Số tiền phải lớn hơn 0");
-            }
+            //if (vm.Amount <= 0)
+            //{
+            //    ModelState.AddModelError("", "Số tiền phải lớn hơn 0");
+            //}
 
-            if (totalPaid + vm.Amount > order.TotalAmount)
-            {
-                ModelState.AddModelError("", "Thanh toán vượt quá số tiền");
-            }
+            //if (totalPaid + vm.Amount > order.TotalAmount)
+            //{
+            //    ModelState.AddModelError("", "Thanh toán vượt quá số tiền");
+            //}
 
-            if (ModelState.IsValid)
-            {
-                var payment = new Payment
-                {
-                    OrderId = vm.OrderId,
-                    Amount = vm.Amount,
-                    PaymentDate = DateTime.Now
-                };
+            //if (ModelState.IsValid)
+            //{
+            //    var payment = new Payment
+            //    {
+            //        //OrderId = vm.OrderId,
+            //        Amount = vm.Amount,
+            //        PaymentDate = DateTime.Now
+            //    };
 
-                _context.Payments.Add(payment);
-                order.Payments.Add(payment);
+            //    _context.Payments.Add(payment);
+            //    order.Payments.Add(payment);
 
-                order.UpdatePaymentStatus();
+            //    order.UpdatePaymentStatus();
 
-                await _context.SaveChangesAsync();
+            //    await _context.SaveChangesAsync();
 
-                return RedirectToAction("Details", "Orders", new { id = vm.OrderId });
-            }
+            //    return View();
+            //}
 
-            // load lại data nếu lỗi
-            vm.Order = order;
-            return View(vm);
+            return View();
+
         }
 
         // GET: Payments/Edit/5
@@ -127,7 +116,7 @@ namespace learnApp.Controllers
             {
                 return NotFound();
             }
-            ViewData["OrderId"] = new SelectList(_context.Orders, "OrderId", "OrderId", payment.OrderId);
+            //ViewData["OrderId"] = new SelectList(_context.Orders, "OrderId", "OrderId", payment.OrderId);
             return View(payment);
         }
 
@@ -163,7 +152,7 @@ namespace learnApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["OrderId"] = new SelectList(_context.Orders, "OrderId", "OrderId", payment.OrderId);
+            //ViewData["OrderId"] = new SelectList(_context.Orders, "OrderId", "OrderId", payment.OrderId);
             return View(payment);
         }
 
@@ -176,7 +165,6 @@ namespace learnApp.Controllers
             }
 
             var payment = await _context.Payments
-                .Include(p => p.Order)
                 .FirstOrDefaultAsync(m => m.PaymentId == id);
             if (payment == null)
             {
@@ -192,23 +180,22 @@ namespace learnApp.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var payment = await _context.Payments
-                .Include(p => p.Order).ThenInclude(o => o.Payments)
+                //.Include(p => p.Order).ThenInclude(o => o.Payments)
                 .FirstOrDefaultAsync(p => p.PaymentId == id);
-            if (payment != null)
-            {                
-                var order = payment.Order;
-                _context.Payments.Remove(payment);
+            //if (payment != null)
+            //{
+            //    var order = payment.Order;
+            //    _context.Payments.Remove(payment);    
+            //    if (order != null)
+            //    {
+            //        order.Payments.Remove(payment);
+            //        order.UpdatePaymentStatus();
+            //    }
 
-                if (order != null)
-                {
-                    order.Payments.Remove(payment);
-                    order.UpdatePaymentStatus();
-                }
+            //}
 
-            }
 
-            
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index));
         }

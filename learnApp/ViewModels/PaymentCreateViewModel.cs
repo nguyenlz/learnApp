@@ -5,9 +5,15 @@ namespace learnApp.ViewModels
 {
     public class PaymentCreateViewModel
     {
-        public int OrderId { get; set; }
+        public int CustomerId { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
+        public int? SiteId { get; set; }
+        public string? SiteName { get; set; } = string.Empty;
         public decimal Amount { get; set; }
+        public string? Note { get; set; } = string.Empty;
         [ValidateNever]
-        public Order Order { get; set; }
+        public Customer Customer { get; set; }
+        [ValidateNever]
+        public Site Site { get; set; }
     }
 }

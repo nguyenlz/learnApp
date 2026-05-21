@@ -14,5 +14,7 @@ namespace learnApp.Models
         public Customer Customer { get; set; }
         [ValidateNever]
         public ICollection<Order> Orders { get; set; }
+        [ValidateNever]
+        public ICollection<CustomerPayment> CustomerPayments { get; set; }
     }
 }

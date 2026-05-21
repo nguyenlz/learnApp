@@ -1,5 +1,6 @@
 ﻿using learnApp.Enums;
 using learnApp.Models;
+using learnApp.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -151,6 +152,34 @@ namespace learnApp.Controllers
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> Summary(int? customerId)
+        {
+            if (customerId == null)
+            {
+                return NotFound();
+            }
+            var customer = await _context.Customers
+                .Include(c => c.Orders)
+                .Include(c => c.CustomerPayments)
+                .FirstOrDefaultAsync(m => m.CustomerId == customerId);
+            if (customer == null)
+            {
+                return NotFound();
+            }
+            var viewModel = new CustomerSummaryViewModel
+            {
+                CustomerId = customer.CustomerId.ToString(),
+                CustomerName = customer.CustomerName,
+                TotalAmount = customer.Orders.Sum(o => o.TotalAmount),
+                PaidAmount = customer.CustomerPayments.Sum(p => p.Amount),
+                DebtAmount = customer.Orders.Sum(o => o.TotalAmount) - customer.CustomerPayments.Sum(p => p.Amount),
+                Orders = customer.Orders.ToList(),
+                CustomerPayments = customer.CustomerPayments.ToList()
+            };
+
+            return View(viewModel);
         }
 
         private bool CustomerExists(int id)

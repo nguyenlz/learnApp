@@ -20,4 +20,5 @@ public partial class Customer
     public CustomerType Type { get; set; }
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+    public virtual ICollection<CustomerPayment> CustomerPayments { get; set; } = new List<CustomerPayment>();
 }

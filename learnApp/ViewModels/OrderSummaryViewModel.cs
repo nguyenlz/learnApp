@@ -7,6 +7,7 @@ namespace learnApp.ViewModels
         public int CustomerId { get; set; }
         public string CustomerName { get; set; }
         public int SiteId { get; set; } = 0;
+        public string SiteName { get; set; }
 
         public DateTime FromDate { get; set; }
         public DateTime ToDate { get; set; }
@@ -14,5 +15,6 @@ namespace learnApp.ViewModels
         public List<Order> Orders { get; set; } = new();
 
         public decimal TotalAmount { get; set; }
+        public decimal PaidAmount { get; set; }
     }
 }

@@ -1,0 +1,35 @@
+﻿@model learnApp.ViewModels.SupplierPaymentCreateViewModel
+@using learnApp.Helper
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<h4>Nhà cung cấp</h4>
+<p>Tên: @Model.Supplier.SupplierName</p>
+<p>Tổng nợ: @CurrencyHelper.ToVnd(Model.Amount)</p>
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div>
+                <input asp-for="SupplierId" type="hidden" />
+            </div>
+            <div class="form-group">
+                <label asp-for="Amount" class="control-label"></label>
+                <input asp-for="Amount" class="form-control" />
+                <span asp-validation-for="Amount" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Thanh toán" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@* <div>
+    <a asp-action="Index">Back to List</a>
+</div> *@
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

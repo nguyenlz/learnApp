@@ -7,6 +7,17 @@
 
 <h2>Tạo đơn hàng</h2>
 
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["Error"]
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert">
+        </button>
+    </div>
+}
+
 <form asp-action="Create" onsubmit="beforeSubmit()">
     <div class="row">
         <div class="col-md-4">
@@ -78,7 +89,7 @@
             <td>
                 <input name="OrderDetails[${index}].Quantity"
                    type="number"
-                   step="0.5"
+                   step="any"
                    class="form-control"
                    value="1"
                    onchange="calculate(this)" />

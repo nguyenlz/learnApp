@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using learnApp.Models;
 
@@ -11,9 +12,11 @@ using learnApp.Models;
 namespace learnApp.Migrations
 {
     [DbContext(typeof(VlxdContext))]
-    partial class VlxdContextModelSnapshot : ModelSnapshot
+    [Migration("20260512075656_CustomerPayment")]
+    partial class CustomerPayment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -182,25 +185,17 @@ namespace learnApp.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<decimal>("PaidAmount")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(14, 2)
-                        .HasColumnType("decimal(14,2)")
-                        .HasDefaultValue(0m);
-
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("int");
 
                     b.Property<int?>("SiteId")
-                        .HasColumnType("int")
-                        .HasColumnName("SiteID");
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasPrecision(14, 2)
-                        .HasColumnType("decimal(14,2)");
+                        .HasColumnType("decimal(14, 2)");
 
                     b.HasKey("OrderId")
                         .HasName("PK__Orders__C3905BAFC6915AF0");
@@ -225,12 +220,10 @@ namespace learnApp.Migrations
                         .HasColumnName("ProductID");
 
                     b.Property<decimal>("Quantity")
-                        .HasPrecision(14, 2)
-                        .HasColumnType("decimal(14,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal>("UnitPrice")
-                        .HasPrecision(14, 2)
-                        .HasColumnType("decimal(14,2)");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("OrderId", "ProductId")
                         .HasName("PK__OrderDet__08D097C11AF87EFB");
@@ -497,9 +490,7 @@ namespace learnApp.Migrations
 
                     b.HasOne("learnApp.Models.Site", "Site")
                         .WithMany("Orders")
-                        .HasForeignKey("SiteId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_Order_Site");
+                        .HasForeignKey("SiteId");
 
                     b.Navigation("Customer");
 
@@ -530,7 +521,7 @@ namespace learnApp.Migrations
             modelBuilder.Entity("learnApp.Models.Payment", b =>
                 {
                     b.HasOne("learnApp.Models.Order", "Order")
-                        .WithMany()
+                        .WithMany("Payments")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -638,6 +629,8 @@ namespace learnApp.Migrations
             modelBuilder.Entity("learnApp.Models.Order", b =>
                 {
                     b.Navigation("OrderDetails");
+
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("learnApp.Models.Product", b =>

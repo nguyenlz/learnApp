@@ -208,42 +208,7 @@ namespace learnApp.Controllers
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-        }
-        public async Task<IActionResult> Summary(int SupplierId)
-        {
-            var imports = _context.StockImports
-                .Where(x => x.SupplierId == SupplierId)
-                .Include(x => x.Supplier)
-                .Include(x => x.StockImportDetails)
-                    .ThenInclude(d => d.Product)
-                .OrderByDescending(x => x.ImportDate)
-                .ToList();
-
-            if (!imports.Any())
-            {
-                return View(new SupplierDebtSummaryViewModel
-                {
-                    SupplierId = SupplierId,
-                    SupplierName = "Không có dữ liệu",
-                    StockImports = new List<StockImport>()
-                });
-            }
-
-            var first = imports.First();
-
-            var summary = new SupplierDebtSummaryViewModel
-            {
-                SupplierId = SupplierId,
-                SupplierName = first.Supplier.SupplierName,
-                TotalAmount = imports.Sum(x => x.TotalAmount),
-                PaidAmount = imports.Sum(x => x.PaidAmount),
-                DebtAmount = imports.Sum(x => x.DebtAmount),
-                StockImports = imports
-            };
-
-
-            return View(summary);
-        }
+        }       
 
         private bool StockImportExists(int id)
         {

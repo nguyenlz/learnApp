@@ -66,7 +66,6 @@ namespace learnApp.Controllers
                 .Include(o => o.Customer)
                 .Include(o => o.Employee)
                 .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
-                .Include(o => o.Payments)
                 .FirstOrDefaultAsync(m => m.OrderId == id);
             if (order == null)
             {
@@ -76,18 +75,18 @@ namespace learnApp.Controllers
             return View(order);
         }
 
-        public async Task<IActionResult> Print(int id)
+        public async Task<IActionResult> Print(int orderId)
         {
             var order = await _context.Orders
                 .Include(o => o.Customer)
                 .Include(o => o.Employee)
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
-                .FirstOrDefaultAsync(o => o.OrderId == id);
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
 
             //return new ViewAsPdf("Print", order)
             //{
-            //    FileName = $"HoaDon_{id}.pdf"
+            //    FileName = $"HoaDon_{orderId}.pdf"
             //};
 
             return View(order);
@@ -102,7 +101,7 @@ namespace learnApp.Controllers
 
             ViewBag.ProductOptions = "<option value='' selected disabled>-- Chọn sản phẩm --</option>" +
                 string.Join("", _context.Products.Select(p =>
-                    $"<option value='{p.ProductId}' data-price='{p.Price}'>{p.ProductName}</option>"
+                    $"<option value='{p.ProductId}' data-price='{p.Price}'>{p.ProductName} (Còn: {p.StockQuantity})</option>"
             ));
 
             return View(new OrderCreateViewModel());
@@ -115,40 +114,78 @@ namespace learnApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(OrderCreateViewModel model)
         {
-            Console.WriteLine("Received Order:");
-            foreach (var state in ModelState)
+            if (!ModelState.IsValid)
             {
-                foreach (var error in state.Value.Errors)
-                {
-                    Console.WriteLine($"Field: {state.Key} - Error: {error.ErrorMessage}");
-                }
-            }
-            if (ModelState.IsValid)
-            {
-                // 1. Lưu Order
-                Console.WriteLine($"Order: CustomerId={model.Order.CustomerId}, EmployeeId={model.Order.EmployeeId}, OrderDate={model.Order.OrderDate}");
-                _context.Orders.Add(model.Order);
-                await _context.SaveChangesAsync();
-
-                decimal total = 0;
-
-                // 2. Lưu OrderDetail
-                Console.WriteLine("Order Details:");
-                foreach (var item in model.OrderDetails)
-                {
-                    item.OrderId = model.Order.OrderId;
-                    total += item.Quantity * item.UnitPrice;
-                    _context.OrderDetails.Add(item);
-                }
-
-                // 3. Update TotalAmount
-                model.Order.TotalAmount = total;
-                await _context.SaveChangesAsync();
-
-                return RedirectToAction(nameof(Index));
+                LoadViewData();
+                return View(model);
             }
 
-            return View(model);
+            // Gom sản phẩm trùng nhau trong cùng đơn
+            var groupedProducts = model.OrderDetails
+                .GroupBy(x => x.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    TotalQuantity = g.Sum(x => x.Quantity)
+                })
+                .ToList();
+
+            // Kiểm tra tồn kho
+            foreach (var item in groupedProducts)
+            {
+                var product = await _context.Products
+                    .FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
+
+                if (product == null)
+                {
+                    ModelState.AddModelError("", "Sản phẩm không tồn tại.");
+                    LoadViewData();
+                    return View(model);
+                }
+
+                decimal stock = product.StockQuantity ?? 0;
+
+                if (stock < item.TotalQuantity)
+                {
+                    ModelState.AddModelError("",
+                        $"Sản phẩm '{product.ProductName}' chỉ còn {stock} {product.Unit}.");
+
+                    TempData["Error"] =
+                        $"Sản phẩm '{product.ProductName}' chỉ còn {stock} {product.Unit}.";
+
+                    LoadViewData();
+                    return View(model);
+                }
+            }
+
+            // Tạo order
+            _context.Orders.Add(model.Order);
+            await _context.SaveChangesAsync();
+
+            decimal total = 0;
+
+            // Lưu detail + trừ kho
+            foreach (var item in model.OrderDetails)
+            {
+                item.OrderId = model.Order.OrderId;
+
+                total += item.Quantity * item.UnitPrice;
+
+                _context.OrderDetails.Add(item);
+
+                // trừ tồn kho
+                var product = await _context.Products
+                    .FirstAsync(p => p.ProductId == item.ProductId);
+
+                product.StockQuantity =
+                    (product.StockQuantity ?? 0) - item.Quantity;
+            }
+
+            model.Order.TotalAmount = total;
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Details), new { id = model.Order.OrderId });
         }
 
         [HttpGet]
@@ -230,53 +267,6 @@ namespace learnApp.Controllers
             ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId", order.EmployeeId);
             return View(order);
         }
-
-        public async Task<IActionResult> Summary(int? customerId, int? siteId)
-        {
-            if (customerId == null && siteId == null)
-                return BadRequest();
-
-            //var from = fromDate ?? DateTime.Today.AddDays(-30);
-            //var to = toDate ?? DateTime.Today;
-
-            var query = _context.Orders
-                //.Where(o => o.CustomerId == customerId && o.SiteId == siteId)
-                    //&& o.OrderDate >= from
-                    //&& o.OrderDate <= to)
-                .Where(o => o.PaymentStatus != Enums.PaymentStatus.Paid)
-                .Include(o => o.Customer)
-                .Include(o => o.OrderDetails)
-                    .ThenInclude(od => od.Product)
-                .AsQueryable();
-
-            if (customerId.HasValue)
-                query = query.Where(o => o.CustomerId == customerId.Value);
-
-            if (siteId.HasValue)
-                query = query.Where(o => o.SiteId == siteId.Value);
-
-            var orders = await query.ToListAsync();
-
-            var customerName = orders.FirstOrDefault()?.Customer?.CustomerName ?? "";
-
-            var total = orders
-                .SelectMany(o => o.OrderDetails)
-                .Sum(od => od.Quantity * od.UnitPrice);
-
-            var vm = new OrderSummaryViewModel
-            {
-                CustomerId = customerId ?? 0,
-                CustomerName = customerName,
-                //FromDate = from,
-                //ToDate = to,
-                SiteId = siteId ?? 0,
-                Orders = orders,
-                TotalAmount = total
-            };  
-
-            return View(vm);
-        }
-
         // GET: Orders/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
@@ -308,23 +298,120 @@ namespace learnApp.Controllers
 
             if (order != null)
             {
+                foreach (var item in order.OrderDetails)
+                {
+                    var product = await _context.Products
+                        .FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
+
+                    if (product != null)
+                    {
+                        product.StockQuantity =
+                            (product.StockQuantity ?? 0) + item.Quantity;
+                    }
+                }
+
                 _context.OrderDetails.RemoveRange(order.OrderDetails); // xoá con
                 _context.Orders.Remove(order); // xoá cha
                 await _context.SaveChangesAsync();
             }
-            //var order = await _context.Orders.FindAsync(id);
-            //if (order != null)
-            //{
-            //    _context.Orders.Remove(order);
-            //}
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+        public async Task<IActionResult> Summary(int? customerId, int? siteId, string? type)
+        {
+            if (customerId == null && siteId == null)
+                return BadRequest();
+
+            var vm = await GetSummaryData(customerId, siteId, type);
+
+            return View(vm);
+        }
+        public async Task<IActionResult> PrintSummary(int? customerId, int? siteId, string? type)
+        {
+            if (customerId == null && siteId == null)
+                return BadRequest();
+
+            var vm = await GetSummaryData(customerId, siteId, type);
+
+            //return new ViewAsPdf("PrintSummary", vm)
+            //{
+            //    FileName = $"HoaDonTong_{DateTime.Now:yyyyMMddHHmmss}.pdf"
+            //};
+
+            return View(vm);
         }
 
         private bool OrderExists(int id)
         {
             return _context.Orders.Any(e => e.OrderId == id);
+        }
+        private async Task<OrderSummaryViewModel> GetSummaryData(int? customerId, int? siteId, string? type)
+        {
+            var query = _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.Site)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .AsQueryable();
+
+            var paid = _context.CustomerPayments.AsQueryable();
+
+            if (!string.IsNullOrEmpty(type))
+            {
+                if (type == "unpaid")
+                    query = query.Where(o => o.PaymentStatus != Enums.PaymentStatus.Paid);
+            }
+
+            if (customerId.HasValue)
+            {
+                query = query.Where(o => o.CustomerId == customerId);
+                paid = paid.Where(cp => cp.CustomerId == customerId);
+            }
+                
+
+            if (siteId.HasValue)
+            {
+                query = query.Where(o => o.SiteId == siteId);
+                paid = paid.Where(cp => cp.SiteId == siteId);
+            }                
+
+            var orders = await query.ToListAsync();
+
+            var customerName = orders.FirstOrDefault()?.Customer?.CustomerName ?? "";
+            var siteName = orders.FirstOrDefault()?.Site?.Name ?? "";
+
+            var total = orders.Sum(o => o.TotalAmount);
+
+            var paidAmount = orders.Sum(o => o.PaidAmount);
+
+            return new OrderSummaryViewModel
+            {
+                CustomerId = customerId ?? 0,
+                SiteId = siteId ?? 0,
+                CustomerName = customerName,
+                SiteName = siteName,
+                Orders = orders,
+                TotalAmount = total,
+                PaidAmount = paidAmount
+            };
+        }
+        private void LoadViewData()
+        {
+            ViewData["CustomerId"] =
+                new SelectList(_context.Customers, "CustomerId", "CustomerName");
+
+            ViewData["EmployeeId"] =
+                new SelectList(_context.Employees, "EmployeeId", "EmployeeName");
+
+            ViewData["SiteId"] =
+                new SelectList(_context.Sites, "SiteId", "Name");
+
+            ViewBag.ProductOptions =
+                "<option value='' selected disabled>-- Chọn sản phẩm --</option>" +
+                string.Join("", _context.Products.Select(p =>
+                    $"<option value='{p.ProductId}' data-price='{p.Price}'>" +
+                    $"{p.ProductName} (Còn: {p.StockQuantity})</option>"
+                ));
         }
     }
 }

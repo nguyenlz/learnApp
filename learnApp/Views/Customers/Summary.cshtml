@@ -1,0 +1,89 @@
+﻿@model learnApp.ViewModels.CustomerSummaryViewModel
+@using learnApp.Helper
+
+<h4>Tổng hợp</h4>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Khách hàng</th>
+            <th>Tổng tiền</th>
+            <th>Đã trả</th>
+            <th>Còn nợ</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@Model.CustomerName</td>
+            <td>@Model.TotalAmount.ToString("N0")</td>
+            <td>@Model.PaidAmount.ToString("N0")</td>
+            <td class="text-danger fw-bold">
+                @Model.DebtAmount.ToString("N0")
+            </td>
+            <td>
+                <a asp-controller="CustomerPayments"
+                       asp-action="Create"
+                       asp-route-customerId="@Model?.CustomerId"
+                       asp-route-debtAmount="@Model?.DebtAmount"
+                       class="btn btn-warning">
+                    Thanh toán
+                </a>
+                <a asp-controller="CustomerPayments"
+                       asp-action="Create"
+                       asp-route-customerId="@Model?.CustomerId"
+                       asp-route-debtAmount="0"
+                       class="btn btn-success">
+                    Đặt cọc
+                </a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<hr />
+<h4>Đơn hàng</h4>
+<a asp-controller="Orders"
+       asp-action="Summary"
+       asp-route-customerId="@Model?.CustomerId"
+       asp-route-type="all"
+       class="btn btn-primary">
+    Tất cả đơn
+</a>
+<a asp-controller="Orders"
+       asp-action="Summary"
+       asp-route-customerId="@Model?.CustomerId"
+       asp-route-type="unpaid"
+       class="btn btn-info">
+    Đơn chưa thanh toán
+</a>
+
+<hr />
+<h4>Lịch sử thanh toán</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Ngày thanh toán</th>
+            <th>Số tiền</th>
+            <th>Ghi chú</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.CustomerPayments != null && Model.CustomerPayments.Any())
+        {
+            @foreach (var payment in Model.CustomerPayments)
+            {
+                <tr>
+                    <td>@payment.PaymentDate.ToString("dd/MM/yyyy")</td>
+                    <td>@CurrencyHelper.ToVnd(payment.Amount)</td>
+                    <td>@payment.Note</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="2">Không có dữ liệu thanh toán</td>
+            </tr>
+        }
+    </tbody>
+</table>

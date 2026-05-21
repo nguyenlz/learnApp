@@ -1,0 +1,125 @@
+﻿@model learnApp.ViewModels.OrderSummaryViewModel
+@using learnApp.Helper
+
+<style>
+    body {
+        font-family: Arial;
+        padding: 20px;
+    }
+
+    .header {
+        text-align: left;
+    }
+
+    .info {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    table, th, td {
+        border: 1px solid black;
+    }
+
+    th, td {
+        padding: 8px;
+        text-align: center;
+    }
+
+    .right {
+        text-align: right;
+    }
+
+    .total {
+        font-size: 18px;
+        font-weight: bold;
+    }
+</style>
+
+<div class="header">
+    <h3>CỬA HÀNG VLXD XUÂN LẠC</h3>
+    <p>Địa chỉ: Quốc lộ 1A, Vạn Ninh, Khánh Hòa</p>
+    <p>SĐT: 0978 026 168</p>
+</div>
+<hr />
+
+<div class="info">    
+    @if (Model.CustomerId != 0)
+    {
+        <h3><strong>Kính gửi:</strong> @Model.CustomerName</h3>
+    }
+    @if (Model.SiteId != 0)
+    {
+        <h3><strong>Kính gửi:</strong> @Model.CustomerName</h3>
+        <h3><strong>Công trình:</strong> @Model.SiteName</h3>
+    }   
+</div>
+
+<table>
+    <tr>
+        <th>Ngày giao</th>
+        <th>Sản phẩm</th>
+        <th>Số lượng</th>
+        <th>Đơn giá</th>
+        <th>Thành tiền</th>
+    </tr>
+    @foreach (var order in Model.Orders)
+    {   
+        foreach (var item in order.OrderDetails)
+        {
+            <tr>
+                <td>@order.OrderDate?.ToString("dd/MM/yyyy")</td>
+                <td>@item.Product.ProductName</td>
+                <td>@item.Quantity</td>
+                <td>@CurrencyHelper.ToVnd(item.UnitPrice)</td>
+                <td>@CurrencyHelper.ToVnd(item.Quantity * item.UnitPrice)</td>
+            </tr>            
+        }        
+    }
+    <tr>
+        <td colspan="4" class="text-end"><strong>Tổng cộng:</strong></td>
+        <td><strong>@CurrencyHelper.ToVnd(Model.TotalAmount)</strong></td>
+    </tr>
+    @if (Model.PaidAmount > 0)
+    {
+        <tr>
+            <td colspan="4" class="text-end text-danger">Đã thanh toán:</td>
+            <td class="text-danger fw-bold">@CurrencyHelper.ToVnd(Model.PaidAmount)</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="text-end"><strong>Còn lại:</strong></td>
+            <td><strong>@CurrencyHelper.ToVnd(Model.TotalAmount - Model.PaidAmount)</strong></td>
+        </tr>
+    }    
+</table>
+
+@* <p class="right total">
+    Tổng tiền: @CurrencyHelper.ToVnd(Model.TotalAmount)
+</p> *@
+
+
+
+<br />
+<br />
+
+<div style="display:flex; justify-content: space-between;">
+    <div>
+        <p><strong>Khách hàng</strong></p>
+        <br /><br />
+        <p>(Ký tên)</p>
+    </div>
+
+    <div>
+        <p><strong>Nhân viên</strong></p>
+        <br /><br />
+        <p>(Ký tên)</p>
+    </div>
+</div>
+
+<br />
+<p style="text-align:center;">Cảm ơn quý khách!</p>

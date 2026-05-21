@@ -5,13 +5,17 @@
     ViewData["Title"] = "Thanh toán";
 }
 
+<h4>Thông tin đơn hàng</h4>
+<p>Khách hàng: @Model.CustomerName</p>
+<p>Tổng tiền: @CurrencyHelper.ToVnd(Model.Amount)</p>
 
 <h4>Thanh toán</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Create" method="post">
-            @* <input type="hidden" asp-for="OrderId" /> *@
+            <input type="hidden" asp-for="CustomerId" />
+            <input type="hidden" asp-for="SiteId" />
 
             <div class="form-group">
                 <label>Số tiền thanh toán</label>
@@ -19,15 +23,13 @@
                 <span asp-validation-for="Amount" class="text-danger"></span>
             </div>
 
+            <div class="form-group">
+                <label>Ghi chú</label>
+                <input asp-for="Note" class="form-control" />
+                <span asp-validation-for="Note" class="text-danger"></span>
+            </div>
+
             <button type="submit" class="btn btn-primary">Thanh toán</button>
         </form>
     </div>
 </div>
-
-<div>
-    @* <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId">Back to List</a> *@
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}

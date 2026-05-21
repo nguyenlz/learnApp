@@ -1,4 +1,5 @@
 ﻿@model IEnumerable<learnApp.Models.StockImport>
+@using learnApp.Helper
 
 @{
     ViewData["Title"] = "Index";
@@ -21,6 +22,12 @@
             <th>
                 @Html.DisplayNameFor(model => model.Supplier.SupplierName)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalAmount)
+            </th>
+            @* <th>
+                @Html.DisplayNameFor(model => model.PaidAmount)
+            </th> *@
             <th></th>
         </tr>
     </thead>
@@ -36,6 +43,12 @@
             <td>
                 @Html.DisplayFor(modelItem => item.Supplier.SupplierName)
             </td>
+            <td>
+                @CurrencyHelper.ToVnd(item.TotalAmount)
+            </td>
+            @* <td>
+                @CurrencyHelper.ToVnd(item.PaidAmount)
+            </td> *@
             <td>
                 <a asp-action="Edit" asp-route-id="@item.ImportId">Edit</a> |
                 <a asp-action="Details" asp-route-id="@item.ImportId">Details</a> |

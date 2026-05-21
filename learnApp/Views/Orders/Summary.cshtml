@@ -4,8 +4,11 @@
 <h2>HÓA ĐƠN TỔNG</h2>
 
 <p><strong>Khách hàng:</strong> @Model.CustomerName</p>
-@* <p><strong>Từ ngày:</strong> @Model.FromDate.ToString("dd/MM/yyyy")</p>
-<p><strong>Đến ngày:</strong> @Model.ToDate.ToString("dd/MM/yyyy")</p> *@
+@if(!string.IsNullOrEmpty(Model.SiteName) && Model.SiteId > 0)
+{
+    <p><strong>Công trình:</strong> @Model.SiteName</p>
+}
+
 
 <table class="table table-bordered">
     <tr>
@@ -17,6 +20,10 @@
         <th>Đơn giá</th>
         <th>Thành tiền</th>
         <th>Ghi chú</th>
+        @if (Model.SiteId <= 0 && Model.Orders.Any(o => o.Site != null))
+        {
+            <th>Công trình</th>
+        }
     </tr>
 
     @{
@@ -36,10 +43,14 @@
                 <td>@order.OrderDate</td>
                 <td>@item.Product.ProductName</td>
                 <td>@item.Product.Unit</td>
-                <td>@item.Quantity</td>
+                <td>@CurrencyHelper.FormatQuantity(item.Quantity)</td>
                 <td>@CurrencyHelper.ToVnd(item.UnitPrice)</td>
                 <td>@CurrencyHelper.ToVnd(thanhTien)</td>
                 <td></td>
+                @if (Model.SiteId <= 0 && order.Site != null)
+                {
+                    <td>@order.Site.Name</td>
+                }
             </tr>
 
             stt++;
@@ -51,12 +62,31 @@
         <td><strong>@CurrencyHelper.ToVnd(tong)</strong></td>
         <td></td>
     </tr>
+    @if (Model.PaidAmount > 0)
+    {
+        <tr>
+            <td colspan="6" class="text-end text-danger"><strong>Đã thanh toán:</strong></td>
+            <td class="text-danger"><strong>@CurrencyHelper.ToVnd(Model.PaidAmount)</strong></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="6" class="text-end"><strong>Còn lại:</strong></td>
+            <td><strong>@CurrencyHelper.ToVnd(Model.TotalAmount - Model.PaidAmount)</strong></td>
+            <td></td>
+        </tr>
+    }
 </table>
 
 <a asp-action="PrintSummary"
-       asp-route-customerId="@Model.CustomerId"
-       asp-route-fromDate="@Model.FromDate"
-       asp-route-toDate="@Model.ToDate"
+       asp-route-customerId="@(Model.CustomerId > 0 ? Model.CustomerId : null)"
+       asp-route-siteId="@(Model.SiteId > 0 ? Model.SiteId : null)"
        class="btn btn-success">
     In hóa đơn
+</a>
+
+<a asp-controller="CustomerPayments" asp-action="Create"
+       asp-route-customerId="@(Model.CustomerId > 0 ? Model.CustomerId : null)"
+       asp-route-siteId="@(Model.SiteId > 0 ? Model.SiteId : null)"
+       class="btn btn-warning">
+    Thanh toán
 </a>

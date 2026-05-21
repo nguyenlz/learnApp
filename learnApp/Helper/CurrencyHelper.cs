@@ -17,5 +17,24 @@ namespace learnApp.Helper
                 ? string.Format(ViCulture, "{0:#,0} ₫", amount.Value)
                 : "0 ₫";
         }
+        public static string FormatQuantity(decimal quantity)
+        {
+            // nếu là số nguyên
+            if (quantity % 1 == 0)
+            {
+                return quantity.ToString("#,0", ViCulture);
+            }
+
+            // nếu có phần thập phân
+            return quantity.ToString("#,0.##", ViCulture);
+        }
+
+        public static string FormatQuantity(decimal? quantity)
+        {
+            if (!quantity.HasValue)
+                return "0";
+
+            return FormatQuantity(quantity.Value);
+        }
     }
 }

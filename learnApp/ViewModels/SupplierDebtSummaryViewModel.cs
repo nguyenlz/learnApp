@@ -11,5 +11,6 @@ namespace learnApp.ViewModels
         public decimal PaidAmount { get; set; }
         public decimal DebtAmount { get; set; }
         public List<StockImport> StockImports { get; set; } = new();
+        public List<SupplierPayment> SupplierPayments { get; set; } = new();
     }
 }

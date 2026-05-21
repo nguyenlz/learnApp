@@ -52,13 +52,18 @@
                 <a asp-action="Edit" asp-route-id="@item.CustomerId">Edit</a> |
                 <a asp-action="Details" asp-route-id="@item.CustomerId">Details</a> |
                 <a asp-action="Delete" asp-route-id="@item.CustomerId">Delete</a> |
-                <a asp-controller="Orders"
-                        asp-action="Summary"
-                        asp-route-customerId="@item.CustomerId"
-                        class="btn btn-info btn-sm">
-                    Gom đơn
-                </a>
-            </td>
+                @if(item.Type == 0)
+                {
+                    <a asp-controller="Orders"
+                            asp-action="Summary"
+                            asp-route-customerId="@item.CustomerId"
+                            asp-route-type="unpaid"
+                            class="btn btn-info btn-sm">
+                        Gom đơn
+                    </a>
+                }
+                <a asp-action="Summary" asp-route-customerId="@item.CustomerId" class="btn btn-warning btn-sm">Công nợ</a>
+                </td>
         </tr>
 }
     </tbody>

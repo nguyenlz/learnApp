@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using learnApp.Models;
+﻿using learnApp.Models;
+using learnApp.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace learnApp.Controllers
 {
@@ -151,6 +152,46 @@ namespace learnApp.Controllers
         private bool SupplierExists(int id)
         {
             return _context.Suppliers.Any(e => e.SupplierId == id);
+        }
+        public async Task<IActionResult> Summary(int SupplierId)
+        {
+            var imports = _context.StockImports
+                .Where(x => x.SupplierId == SupplierId)
+                .Include(x => x.Supplier)
+                .Include(x => x.StockImportDetails)
+                    .ThenInclude(d => d.Product)
+                .OrderByDescending(x => x.ImportDate)
+                .ToList();
+
+            if (!imports.Any())
+            {
+                return View(new SupplierDebtSummaryViewModel
+                {
+                    SupplierId = SupplierId,
+                    SupplierName = "Không có dữ liệu",
+                    StockImports = new List<StockImport>()
+                });
+            }
+
+            var first = imports.First();
+
+            var supplierPayments = _context.SupplierPayments
+                .Where(p => p.SupplierId == SupplierId)
+                .ToList();
+
+            var summary = new SupplierDebtSummaryViewModel
+            {
+                SupplierId = SupplierId,
+                SupplierName = first.Supplier.SupplierName,
+                TotalAmount = imports.Sum(x => x.TotalAmount),
+                PaidAmount = supplierPayments.Sum(x => x.Amount),
+                DebtAmount = imports.Sum(x => x.DebtAmount) - supplierPayments.Sum(x => x.Amount),
+                StockImports = imports,
+                SupplierPayments = supplierPayments
+            };
+
+
+            return View(summary);
         }
     }
 }
