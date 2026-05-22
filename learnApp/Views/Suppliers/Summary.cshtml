@@ -16,10 +16,10 @@
     <tbody>
         <tr>
             <td>@Model.SupplierName</td>
-            <td>@Model.TotalAmount.ToString("N0")</td>
-            <td>@Model.PaidAmount.ToString("N0")</td>
+            <td>@CurrencyHelper.ToVnd(Model.TotalAmount)</td>
+            <td>@CurrencyHelper.ToVnd(Model.PaidAmount)</td>
             <td class="text-danger fw-bold">
-                @Model.DebtAmount.ToString("N0")
+                @CurrencyHelper.ToVnd(Model.DebtAmount)
             </td>
             <td>
                 <a asp-controller="SupplierPayments"

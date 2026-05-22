@@ -185,7 +185,7 @@ namespace learnApp.Controllers
                 SupplierName = first.Supplier.SupplierName,
                 TotalAmount = imports.Sum(x => x.TotalAmount),
                 PaidAmount = supplierPayments.Sum(x => x.Amount),
-                DebtAmount = imports.Sum(x => x.DebtAmount) - supplierPayments.Sum(x => x.Amount),
+                DebtAmount = imports.Sum(x => x.TotalAmount) - supplierPayments.Sum(x => x.Amount),
                 StockImports = imports,
                 SupplierPayments = supplierPayments
             };

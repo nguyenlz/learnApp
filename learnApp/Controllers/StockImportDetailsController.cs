@@ -19,9 +19,19 @@ namespace learnApp.Controllers
         }
 
         // GET: StockImportDetails
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchbarinput)
         {
-            var vlxdContext = _context.StockImportDetails.Include(s => s.Import).Include(s => s.Product);
+            IQueryable<StockImportDetail> vlxdContext = _context.StockImportDetails
+                .Include(s => s.Import)
+                .Include(s => s.Product);
+
+            if (!string.IsNullOrEmpty(searchbarinput))
+            {
+                vlxdContext = vlxdContext.Where(s =>
+                    s.Product != null &&
+                    s.Product.ProductName.Contains(searchbarinput));
+            }
+
             return View(await vlxdContext.ToListAsync());
         }
 

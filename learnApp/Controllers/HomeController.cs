@@ -1,4 +1,5 @@
 using learnApp.Models;
+using learnApp.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -6,9 +7,18 @@ namespace learnApp.Controllers
 {
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        private readonly DashboardService _dashboardService;
+
+        public HomeController(DashboardService dashboardService)
         {
-            return View();
+            _dashboardService = dashboardService;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var vm = await _dashboardService.GetDashboardData();
+
+            return View(vm);
         }
 
         public IActionResult Privacy()

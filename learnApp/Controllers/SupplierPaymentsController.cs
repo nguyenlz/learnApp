@@ -70,9 +70,6 @@ namespace learnApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(SupplierPaymentCreateViewModel vm)
         {
-
-
-
             if (ModelState.IsValid)
             {
                 var supplierPayment = new SupplierPayment

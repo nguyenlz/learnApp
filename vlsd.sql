@@ -107,16 +107,18 @@ VALUES
 
 INSERT INTO Products (ProductName, CategoryID, SupplierID, Unit, Price, StockQuantity)
 VALUES
-(N'Xi măng PCB40', 1, 1, N'Bao', 95000, 500),
-(N'Thép phi 10', 2, 2, N'Cây', 120000, 300),
-(N'Gạch đỏ', 3, 3, N'Viên', 1500, 10000),
-(N'Xi măng Holcim', 1, 1, N'Bao', 100000, 200);
+(N'Gạch 4 TTP', 3, 6, N'Viên', 1900, 0),
+(N'Gạch 4 CN', 3, 6, N'Viên', 1650, 0),
+(N'Gạch 6 TTP', 3, 6, N'Viên', 2900, 0),
+(N'Thẻ đặc', 3, 6, N'Viên', 2000, 0);
 
 INSERT INTO Products(ProductName, CategoryID, SupplierID, Unit, Price, StockQuantity)
 VALUES
-(N'Xi măng Nghi Sơn', 2, 2, N'Bao', 100000, 0),
-(N'Xi măng Long Sơn', 2, 2, N'Bao', 85000, 0),
-(N'Xi măng SCG', 2, 2, N'Bao', 105000, 0);
+(N'Kẽm cột (1 ly)', 1, 5, N'kg', 25000, 0),
+(N'Sắt 10 Hòa Phát', 1, 5, N'Cây', 113000, 0),
+(N'Sắt 12 Hòa Phát', 1, 5, N'Cây', 175000, 0),
+(N'Sắt 14 Hòa Phát', 1, 5, N'Cây', 238000, 0),
+(N'Sắt 16 Hòa Phát', 1, 5, N'Cây', 304000, 0);
 
 INSERT INTO Customers (CustomerName, Phone, Address, Email)
 VALUES

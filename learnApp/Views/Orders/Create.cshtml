@@ -19,7 +19,67 @@
 }
 
 <form asp-action="Create" onsubmit="beforeSubmit()">
-    <div class="row">
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+
+            <div class="card-section-title">
+                Thông tin đơn hàng
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <label class="form-label form-label-custom">
+                        Khách hàng
+                    </label>
+
+                    <select asp-for="Order.CustomerId"
+                            class="form-select"
+                            asp-items="ViewBag.CustomerId"
+                            onchange="loadSites(this)">
+                        <option value="">-- Chọn khách hàng --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label form-label-custom">
+                        Nhân viên
+                    </label>
+
+                    <select asp-for="Order.EmployeeId"
+                            class="form-select"
+                            asp-items="ViewBag.EmployeeId">
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label form-label-custom">
+                        Công trình
+                    </label>
+
+                    <select asp-for="Order.SiteId"
+                            class="form-select"
+                            disabled>
+                        <option value="">-- Chọn công trình --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label form-label-custom">
+                        Ngày tạo đơn
+                    </label>
+
+                    <input asp-for="Order.OrderDate"
+                           type="datetime-local"
+                           value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
+                           class="form-control" />
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    @* <div class="row">
         <div class="col-md-4">
 
             <select asp-for="Order.CustomerId"
@@ -49,18 +109,20 @@
         </div>
     </div>
 
-    <hr />
+    <hr /> *@
 
-    <h4>Danh sách sản phẩm</h4>
+    <h4 class="card-section-title mt-4">
+        Danh sách sản phẩm
+    </h4>
 
-    <table class="table" id="orderDetailsTable">
+    <table class="table table-bordered align-middle" id="orderDetailsTable">
         <thead>
             <tr>
-                <th>Product</th>
-                <th>Số lượng</th>
-                <th>Giá</th>
-                <th>Thành tiền</th>
-                <th></th>
+                <th>Sản phẩm</th>
+                <th class="text-end">Số lượng</th>
+                <th class="text-end">Đơn giá</th>
+                <th class="text-end">Thành tiền</th>
+                <th width="80"></th>
             </tr>
         </thead>
         <tbody>
@@ -79,23 +141,37 @@
     let index = 0;
 
     function addRow() {
+        let currentIndex = index;
         let row = `
         <tr>
-            <td>
-                <select name="OrderDetails[${index}].ProductId" class="form-control" onchange="loadPrice(this)">
-                    ${getProductOptions()}
-                </select>
+            <td style="min-width:420px;">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text"
+                           class="form-control product-search"
+                           placeholder="Tìm sản phẩm..."
+                            style="max-width:160px;"
+                           onkeyup="filterProducts(this)" />
+
+                    <select name="OrderDetails[${currentIndex}].ProductId"
+                            class="form-select"
+                            onchange="loadPrice(this)">
+                        ${getProductOptions()}
+                    </select>
+                </div>
             </td>
-            <td>
-                <input name="OrderDetails[${index}].Quantity"
+            <td style="width:120px">
+                <input name="OrderDetails[${currentIndex}].Quantity"
                    type="number"
                    step="any"
                    class="form-control"
                    value="1"
                    onchange="calculate(this)" />
             </td>
-            <td>
-                <input name="OrderDetails[${index}].UnitPrice"
+            <td style="width:180px">
+                <input name="OrderDetails[${currentIndex}].UnitPrice"
                    type="text"
                    class="form-control"
                    value="0"
@@ -103,8 +179,10 @@
                    onblur="formatPrice(this)"
                    onchange="calculate(this)" />
             </td>
-            <td class="total">0</td>
-            <td>
+            <td class="total text-end money-text">
+                0 ₫
+            </td>
+            <td style="width:80px" class="text-center">
                 <button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button>
             </td>
         </tr>
@@ -214,5 +292,85 @@
                 alert("Không load được công trình");
             });
     }
+
+    function removeVietnameseTones(str) {
+
+        return str
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d")
+            .replace(/Đ/g, "D")
+            .toLowerCase();
+    }
+    
+    function filterProducts(input) {
+
+        let keyword = removeVietnameseTones(input.value);
+
+        let td = input.closest('td');
+
+        let select = td.querySelector('select');
+
+        let hasVisible = false;
+
+        for (let option of select.options) {
+
+            let text = removeVietnameseTones(option.text);
+
+            let match = text.includes(keyword);
+
+            option.hidden = !match;
+
+            if (match) {
+                hasVisible = true;
+            }
+        }
+
+        // tự chọn option đầu tiên phù hợp
+        if (hasVisible) {
+
+            let firstVisible = [...select.options]
+                .find(o => !o.hidden);
+
+            if (firstVisible) {
+                select.value = firstVisible.value;
+                loadPrice(select);
+            }
+        }
+    }
 </script>
 }
+
+<style>
+
+    .form-label-custom {
+        font-size: 15px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 6px;
+    }
+
+    .card-section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 20px;
+    }
+
+    .table thead th {
+        background-color: #f8fafc;
+        color: #334155;
+        font-weight: 700;
+        vertical-align: middle;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .money-text {
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+</style>

@@ -33,7 +33,6 @@ public partial class VlxdContext : DbContext
     public virtual DbSet<StockImportDetail> StockImportDetails { get; set; }
 
     public virtual DbSet<Supplier> Suppliers { get; set; }
-    public DbSet<Payment> Payments { get; set; } = default!;
     public DbSet<Site> Sites { get; set; } = default!;
     public DbSet<SupplierPayment> SupplierPayments { get; set; } = default!;
     public DbSet<CustomerPayment> CustomerPayments { get; set; } = default!;
@@ -42,7 +41,6 @@ public partial class VlxdContext : DbContext
     //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
     //        => optionsBuilder.UseSqlServer("Server=DESKTOP-B98ANRQ\\SQLEXPRESS;Database=VLXD;Trusted_Connection=True;TrustServerCertificate=true");
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Category>(entity =>
@@ -230,26 +228,6 @@ public partial class VlxdContext : DbContext
                 .HasMaxLength(15)
                 .IsUnicode(false);
             entity.Property(e => e.SupplierName).HasMaxLength(150);
-        });
-
-        modelBuilder.Entity<Payment>(entity =>
-        {
-            entity.HasKey(e => e.PaymentId);
-
-            entity.Property(e => e.PaymentId).HasColumnName("PaymentID");
-            //entity.Property(e => e.OrderId).HasColumnName("OrderID");
-
-            entity.Property(e => e.Amount)
-                .HasColumnType("decimal(18, 2)");
-
-            entity.Property(e => e.PaymentDate)
-                .HasColumnType("datetime")
-                .HasDefaultValueSql("getdate()");
-
-            //entity.HasOne(p => p.Order)
-            //    .WithMany(o => o.Payments)
-            //    .HasForeignKey(p => p.OrderId)
-            //    .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<SupplierPayment>(entity =>

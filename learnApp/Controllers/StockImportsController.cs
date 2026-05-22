@@ -74,7 +74,17 @@ namespace learnApp.Controllers
                 }
             }
             if (ModelState.IsValid)
-            {                
+            {
+                stockImport.StockImportDetails = stockImport.StockImportDetails
+                    .GroupBy(d => d.ProductId)
+                    .Select(g => new StockImportDetail
+                    {
+                        ProductId = g.Key,
+                        Quantity = g.Sum(x => x.Quantity ?? 0),
+                        ImportPrice = g.Last().ImportPrice
+                    })
+                    .ToList();
+
                 decimal total = 0;
                 foreach (var detail in stockImport.StockImportDetails)
                 {
@@ -83,8 +93,6 @@ namespace learnApp.Controllers
                     var quantity = detail.Quantity;
                     var price = detail.ImportPrice;
                     total += (quantity ?? 0) * (price ?? 0);
-
-                    //_context.StockImportDetails.Add(detail);
 
                     var product = _context.Products.Find(detail.ProductId);
                     if (product != null)
@@ -142,6 +150,16 @@ namespace learnApp.Controllers
             {
                 try
                 {
+                    decimal total = 0;
+                    foreach (var detail in _context.StockImportDetails.Where(d => d.ImportId == id))
+                    {
+                        var quantity = detail.Quantity;
+                        var price = detail.ImportPrice;
+                        total += (quantity ?? 0) * (price ?? 0);
+                    }
+                    
+                    stockImport.TotalAmount = total;
+
                     _context.Update(stockImport);
                     await _context.SaveChangesAsync();
                 }

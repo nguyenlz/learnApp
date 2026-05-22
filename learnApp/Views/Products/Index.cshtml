@@ -1,14 +1,31 @@
 ﻿@model IEnumerable<learnApp.Models.Product>
 @using learnApp.Helper
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Sản phẩm";
 }
 
-<h1>Index</h1>
-
+<h1>Sản phẩm</h1>
 <p>
-    <a asp-action="Create">Create New</a>
+    <a asp-action="Create">Tạo mới</a>
 </p>
+<form asp-action="Index" method="get" class="card shadow-sm p-3 mb-3">
+    <div class="mb-3">
+        <div class="input-group">
+            <input type="search" name="searchbarinput"
+                   value="@Context.Request.Query["searchbarinput"]"
+                   class="form-control"
+                   placeholder="Nhập từ khóa..." />
+
+            <button type="submit" class="btn btn-primary px-4">
+                <i class="fa-solid fa-magnifying-glass"></i> Tìm
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                Reset
+            </a>
+        </div>
+    </div>
+</form>
+
 <table class="table">
     <thead>
         <tr>
@@ -46,7 +63,7 @@
                 @CurrencyHelper.ToVnd(item.Price)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.StockQuantity)
+                @CurrencyHelper.FormatQuantity(item.StockQuantity)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Category.CategoryName)

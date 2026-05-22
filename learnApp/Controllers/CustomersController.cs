@@ -21,9 +21,16 @@ namespace learnApp.Controllers
         }
 
         // GET: Customers
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchbarinput)
         {
-            return View(await _context.Customers.ToListAsync());
+            var customers = _context.Customers.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchbarinput))
+            {
+                customers = customers.Where(c => c.CustomerName.Contains(searchbarinput));
+            }
+
+            return View(await customers.ToListAsync());
         }
 
         // GET: Customers/Details/5

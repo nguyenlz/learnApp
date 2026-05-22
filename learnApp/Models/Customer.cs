@@ -10,11 +10,11 @@ public partial class Customer
     public int CustomerId { get; set; }
     [DisplayName("Tên khách hàng")]
     public string CustomerName { get; set; } = null!;
-
+    [DisplayName("Số điện thoại")]
     public string? Phone { get; set; }
-
+    [DisplayName("Địa chỉ")]
     public string? Address { get; set; }
-
+    [DisplayName("Email")]
     public string? Email { get; set; }
     [DisplayName("Loại khách hàng")]
     public CustomerType Type { get; set; }

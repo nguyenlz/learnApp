@@ -19,11 +19,17 @@ namespace learnApp.Controllers
         }
 
         // GET: Products
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchbarinput = "")
         {
             var vlxdContext = _context.Products
                 .Include(p => p.Category)
-                .Include(p => p.Supplier);
+                .Include(p => p.Supplier)
+                .AsQueryable();
+            if (!string.IsNullOrEmpty(searchbarinput))
+            {
+                vlxdContext = vlxdContext.Where(p => p.ProductName.Contains(searchbarinput));
+            }
+                
             return View(await vlxdContext.ToListAsync());
         }
 

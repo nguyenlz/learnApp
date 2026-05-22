@@ -25,7 +25,7 @@ namespace learnApp.Controllers
         // GET: Orders
         public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, string searchbarinput = "")
         {
-            
+
             var vlxdContext = _context.Orders
                         .Include(o => o.Customer)
                         .Include(o => o.Employee)
@@ -204,7 +204,8 @@ namespace learnApp.Controllers
 
             var sites = _context.Sites
                 .Where(s => s.CustomerId == customerId)
-                .Select(s => new {
+                .Select(s => new
+                {
                     siteId = s.SiteId,
                     name = s.Name
                 })
@@ -367,13 +368,13 @@ namespace learnApp.Controllers
                 query = query.Where(o => o.CustomerId == customerId);
                 paid = paid.Where(cp => cp.CustomerId == customerId);
             }
-                
+
 
             if (siteId.HasValue)
             {
                 query = query.Where(o => o.SiteId == siteId);
                 paid = paid.Where(cp => cp.SiteId == siteId);
-            }                
+            }
 
             var orders = await query.ToListAsync();
 

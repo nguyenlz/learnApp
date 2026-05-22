@@ -1,4 +1,5 @@
 using learnApp.Models;
+using learnApp.Services;
 using Microsoft.EntityFrameworkCore;
 using Rotativa.AspNetCore;
 
@@ -6,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<DashboardService>();
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection2");
