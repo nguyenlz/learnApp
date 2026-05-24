@@ -19,18 +19,52 @@ namespace learnApp.Controllers
         }
 
         // GET: Products
-        public async Task<IActionResult> Index(string searchbarinput = "")
+        public async Task<IActionResult> Index(string? searchbarinput, string? sortOrder)
         {
-            var vlxdContext = _context.Products
+            IQueryable<Product> query = _context.Products
                 .Include(p => p.Category)
-                .Include(p => p.Supplier)
-                .AsQueryable();
-            if (!string.IsNullOrEmpty(searchbarinput))
+                .Include(p => p.Supplier);
+
+            // SEARCH
+            if (!string.IsNullOrWhiteSpace(searchbarinput))
             {
-                vlxdContext = vlxdContext.Where(p => p.ProductName.Contains(searchbarinput));
+                searchbarinput = searchbarinput.Trim();
+
+                query = query.Where(p =>
+                    p.ProductName.Contains(searchbarinput));
             }
-                
-            return View(await vlxdContext.ToListAsync());
+
+            // SORT
+            query = sortOrder switch
+            {
+                "name_desc" =>
+                    query.OrderByDescending(p => p.ProductName),
+
+                "price_asc" =>
+                    query.OrderBy(p => p.Price),
+
+                "price_desc" =>
+                    query.OrderByDescending(p => p.Price),
+
+                "stock_asc" =>
+                    query.OrderBy(p => p.StockQuantity),
+
+                "stock_desc" =>
+                    query.OrderByDescending(p => p.StockQuantity),
+
+                "newest" =>
+                    query.OrderByDescending(p => p.ProductId),
+
+                _ =>
+                    query.OrderBy(p => p.ProductName)
+            };
+
+            ViewBag.CurrentSort = sortOrder;
+            ViewBag.CurrentSearch = searchbarinput;
+
+            var products = await query.ToListAsync();
+
+            return View(products);
         }
 
         // GET: Products/Details/5

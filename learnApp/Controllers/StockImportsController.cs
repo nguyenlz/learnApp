@@ -20,10 +20,36 @@ namespace learnApp.Controllers
         }
 
         // GET: StockImports
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchbarinput, string? sortOrder)
         {
-            var vlxdContext = _context.StockImports.Include(s => s.Employee).Include(s => s.Supplier);
-            return View(await vlxdContext.ToListAsync());
+            IQueryable<StockImport> query = _context.StockImports
+                .Include(x => x.Supplier)
+                .Include(x => x.Employee);
+
+            // SEARCH
+            if (!string.IsNullOrWhiteSpace(searchbarinput))
+            {
+                query = query.Where(x =>
+                    x.Supplier.SupplierName.Contains(searchbarinput));
+            }
+
+            // SORT
+            query = sortOrder switch
+            {
+                "date_asc" =>
+                    query.OrderBy(x => x.ImportDate),
+
+                "amount_desc" =>
+                    query.OrderByDescending(x => x.TotalAmount),
+
+                "amount_asc" =>
+                    query.OrderBy(x => x.TotalAmount),
+
+                _ =>
+                    query.OrderByDescending(x => x.ImportDate)
+            };
+
+            return View(await query.ToListAsync());
         }
 
         // GET: StockImports/Details/5
@@ -51,11 +77,7 @@ namespace learnApp.Controllers
         // GET: StockImports/Create
         public IActionResult Create()
         {
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName");
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "SupplierId", "SupplierName");
-            ViewBag.Products = _context.Products
-                .Select(p => new { p.ProductId, p.ProductName })
-                .ToList();
+            LoadViewData();
             return View();
         }
 
@@ -111,8 +133,7 @@ namespace learnApp.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName", stockImport.EmployeeId);
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "SupplierId", "SupplierName", stockImport.SupplierId);
+            LoadViewData();
             return View(stockImport);
         }
 
@@ -124,13 +145,16 @@ namespace learnApp.Controllers
                 return NotFound();
             }
 
-            var stockImport = await _context.StockImports.FindAsync(id);
+            var stockImport = await _context.StockImports
+                .Include(x => x.StockImportDetails)
+                .FirstOrDefaultAsync(x => x.ImportId == id);
+
             if (stockImport == null)
             {
                 return NotFound();
             }
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName", stockImport.EmployeeId);
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "SupplierId", "SupplierName", stockImport.SupplierId);
+
+            LoadViewData();
             return View(stockImport);
         }
 
@@ -139,7 +163,7 @@ namespace learnApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ImportId,SupplierId,ImportDate,EmployeeId")] StockImport stockImport)
+        public async Task<IActionResult> Edit(int id, StockImport stockImport)
         {
             if (id != stockImport.ImportId)
             {
@@ -148,36 +172,79 @@ namespace learnApp.Controllers
 
             if (ModelState.IsValid)
             {
-                try
-                {
-                    decimal total = 0;
-                    foreach (var detail in _context.StockImportDetails.Where(d => d.ImportId == id))
-                    {
-                        var quantity = detail.Quantity;
-                        var price = detail.ImportPrice;
-                        total += (quantity ?? 0) * (price ?? 0);
-                    }
-                    
-                    stockImport.TotalAmount = total;
+                var oldImport = await _context.StockImports
+                    .Include(x => x.StockImportDetails)
+                    .FirstOrDefaultAsync(x => x.ImportId == id);
 
-                    _context.Update(stockImport);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
+                if (oldImport == null)
                 {
-                    if (!StockImportExists(stockImport.ImportId))
+                    return NotFound();
+                }
+
+                // rollback tồn kho cũ
+                foreach (var oldDetail in oldImport.StockImportDetails)
+                {
+                    var product = await _context.Products
+                        .FindAsync(oldDetail.ProductId);
+
+                    if (product != null)
                     {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
+                        product.StockQuantity -= oldDetail.Quantity ?? 0;
                     }
                 }
+
+                // xóa detail cũ
+                _context.StockImportDetails
+                    .RemoveRange(oldImport.StockImportDetails);
+
+                // gộp sản phẩm trùng
+                stockImport.StockImportDetails = stockImport.StockImportDetails
+                    .GroupBy(x => x.ProductId)
+                    .Select(g => new StockImportDetail
+                    {
+                        ProductId = g.Key,
+                        Quantity = g.Sum(x => x.Quantity ?? 0),
+                        ImportPrice = g.Last().ImportPrice
+                    })
+                    .ToList();
+
+                decimal total = 0;
+
+                foreach (var detail in stockImport.StockImportDetails)
+                {
+                    detail.ImportId = stockImport.ImportId;
+
+                    total +=
+                        (detail.Quantity ?? 0)
+                        * (detail.ImportPrice ?? 0);
+
+                    var product = await _context.Products
+                        .FindAsync(detail.ProductId);
+
+                    if (product != null)
+                    {
+                        product.StockQuantity += detail.Quantity ?? 0;
+                    }
+                }
+
+                oldImport.SupplierId = stockImport.SupplierId;
+                oldImport.EmployeeId = stockImport.EmployeeId;
+                oldImport.ImportDate = stockImport.ImportDate;
+
+                oldImport.TotalAmount = total;
+                oldImport.PaidAmount = stockImport?.PaidAmount ?? 0;
+                oldImport.DebtAmount =
+                    total - (stockImport?.PaidAmount ?? 0);
+
+                oldImport.StockImportDetails =
+                    stockImport.StockImportDetails;
+
+                await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId", stockImport.EmployeeId);
-            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "SupplierId", "SupplierId", stockImport.SupplierId);
+
+            LoadViewData();
             return View(stockImport);
         }
 
@@ -231,6 +298,15 @@ namespace learnApp.Controllers
         private bool StockImportExists(int id)
         {
             return _context.StockImports.Any(e => e.ImportId == id);
+        }
+
+        private void LoadViewData()
+        {
+            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName");
+            ViewData["SupplierId"] = new SelectList(_context.Suppliers, "SupplierId", "SupplierName");
+            ViewBag.Products = _context.Products
+                .Select(p => new { p.ProductId, p.ProductName })
+                .ToList();
         }
     }
 }

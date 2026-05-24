@@ -23,35 +23,49 @@ namespace learnApp.Controllers
         }
 
         // GET: Orders
-        public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, string searchbarinput = "")
+        public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, string? searchbarinput, string? sortOrder)
         {
 
-            var vlxdContext = _context.Orders
+            IQueryable<Order> query = _context.Orders
                         .Include(o => o.Customer)
                         .Include(o => o.Employee)
                         .Include(o => o.Site)
                         .AsQueryable();
 
+            // SEARCH
             if (fromDate.HasValue)
             {
-                vlxdContext = vlxdContext.Where(o => o.OrderDate >= fromDate.Value);
+                query = query.Where(o => o.OrderDate >= fromDate.Value);
             }
 
             if (toDate.HasValue)
             {
-                vlxdContext = vlxdContext.Where(o => o.OrderDate <= toDate.Value);
+                query = query.Where(o => o.OrderDate <= toDate.Value);
             }
 
             if (!string.IsNullOrEmpty(searchbarinput))
             {
-                vlxdContext = vlxdContext.Where(o =>
+                query = query.Where(o =>
                     (o.Customer.CustomerName != null && o.Customer.CustomerName.Contains(searchbarinput)) ||
                     (o.Employee.EmployeeName != null && o.Employee.EmployeeName.Contains(searchbarinput)) ||
                     (o.Site != null && o.Site.Name != null && o.Site.Name.Contains(searchbarinput))
                 );
             }
 
-            return View(await vlxdContext.ToListAsync());
+            // SORT
+            query = sortOrder switch
+            {
+                "date_asc" =>
+                    query.OrderBy(o => o.OrderDate),
+                "amount_desc" =>
+                    query.OrderByDescending(o => o.TotalAmount),
+                "amount_asc" =>
+                    query.OrderBy(o => o.TotalAmount),
+                _ =>
+                    query.OrderByDescending(o => o.OrderDate)
+            };
+
+            return View(await query.ToListAsync());
         }
 
         // GET: Orders/Details/5
@@ -95,15 +109,7 @@ namespace learnApp.Controllers
         // GET: Orders/Create
         public IActionResult Create()
         {
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerName");
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeName");
-            ViewData["SiteId"] = new SelectList(_context.Sites, "SiteId", "Name");
-
-            ViewBag.ProductOptions = "<option value='' selected disabled>-- Chọn sản phẩm --</option>" +
-                string.Join("", _context.Products.Select(p =>
-                    $"<option value='{p.ProductId}' data-price='{p.Price}'>{p.ProductName} (Còn: {p.StockQuantity})</option>"
-            ));
-
+            LoadViewData();
             return View(new OrderCreateViewModel());
         }
 
@@ -222,14 +228,24 @@ namespace learnApp.Controllers
                 return NotFound();
             }
 
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderId == id);
+
             if (order == null)
             {
                 return NotFound();
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", order.CustomerId);
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId", order.EmployeeId);
-            return View(order);
+
+            LoadViewData();
+
+            var vm = new OrderCreateViewModel
+            {
+                Order = order,
+                OrderDetails = order.OrderDetails.ToList()
+            };
+
+            return View(vm);
         }
 
         // POST: Orders/Edit/5
@@ -237,36 +253,142 @@ namespace learnApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("OrderId,CustomerId,EmployeeId,OrderDate,TotalAmount")] Order order)
+        public async Task<IActionResult> Edit(int id, OrderCreateViewModel model)
         {
-            if (id != order.OrderId)
+            if (id != model.Order.OrderId)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(order);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!OrderExists(order.OrderId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                LoadViewData();
+                return View(model);
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", order.CustomerId);
-            ViewData["EmployeeId"] = new SelectList(_context.Employees, "EmployeeId", "EmployeeId", order.EmployeeId);
-            return View(order);
+
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderId == id);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            // =========================
+            // HOÀN LẠI TỒN KHO CŨ
+            // =========================
+
+            foreach (var oldDetail in order.OrderDetails)
+            {
+                var product = await _context.Products
+                    .FirstOrDefaultAsync(p => p.ProductId == oldDetail.ProductId);
+
+                if (product != null)
+                {
+                    product.StockQuantity =
+                        (product.StockQuantity ?? 0) + oldDetail.Quantity;
+                }
+            }
+
+            // =========================
+            // GOM SP MỚI ĐỂ CHECK KHO
+            // =========================
+
+            var groupedProducts = model.OrderDetails
+                .GroupBy(x => x.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    TotalQuantity = g.Sum(x => x.Quantity)
+                })
+                .ToList();
+
+            foreach (var item in groupedProducts)
+            {
+                var product = await _context.Products
+                    .FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
+
+                if (product == null)
+                {
+                    ModelState.AddModelError("", "Sản phẩm không tồn tại.");
+
+                    LoadViewData();
+                    return View(model);
+                }
+
+                decimal stock = product.StockQuantity ?? 0;
+
+                if (stock < item.TotalQuantity)
+                {
+                    TempData["Error"] =
+                        $"Sản phẩm '{product.ProductName}' chỉ còn {stock} {product.Unit}.";
+
+                    ModelState.AddModelError("",
+                        $"Sản phẩm '{product.ProductName}' không đủ tồn kho.");
+
+                    // rollback stock cũ nếu fail
+                    foreach (var rollback in order.OrderDetails)
+                    {
+                        var rollbackProduct = await _context.Products
+                            .FirstOrDefaultAsync(p => p.ProductId == rollback.ProductId);
+
+                        if (rollbackProduct != null)
+                        {
+                            rollbackProduct.StockQuantity =
+                                (rollbackProduct.StockQuantity ?? 0) - rollback.Quantity;
+                        }
+                    }
+
+                    LoadViewData();
+                    return View(model);
+                }
+            }
+
+            // =========================
+            // UPDATE ORDER
+            // =========================
+
+            order.CustomerId = model.Order.CustomerId;
+            order.EmployeeId = model.Order.EmployeeId;
+            order.SiteId = model.Order.SiteId;
+            order.OrderDate = model.Order.OrderDate;
+
+            // =========================
+            // XÓA DETAIL CŨ
+            // =========================
+
+            _context.OrderDetails.RemoveRange(order.OrderDetails);
+
+            decimal total = 0;
+
+            // =========================
+            // ADD DETAIL MỚI
+            // =========================
+
+            foreach (var item in model.OrderDetails)
+            {
+                item.OrderId = order.OrderId;
+
+                total += item.Quantity * item.UnitPrice;
+
+                _context.OrderDetails.Add(item);
+
+                var product = await _context.Products
+                    .FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
+
+                if (product != null)
+                {
+                    product.StockQuantity =
+                        (product.StockQuantity ?? 0) - item.Quantity;
+                }
+            }
+
+            order.TotalAmount = total;
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Details), new { id = order.OrderId });
         }
         // GET: Orders/Delete/5
         public async Task<IActionResult> Delete(int? id)
