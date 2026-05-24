@@ -5,8 +5,6 @@
     ViewData["Title"] = "Create";
 }
 
-<h2>Tạo đơn hàng</h2>
-
 @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show">
@@ -115,25 +113,49 @@
         Danh sách sản phẩm
     </h4>
 
-    <table class="table table-bordered align-middle" id="orderDetailsTable">
-        <thead>
-            <tr>
-                <th>Sản phẩm</th>
-                <th class="text-end">Số lượng</th>
-                <th class="text-end">Đơn giá</th>
-                <th class="text-end">Thành tiền</th>
-                <th width="80"></th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+    <div class="table-responsive border rounded shadow-sm">
+        <table class="table align-middle mb-0" id="orderDetailsTable">
 
-    <button type="button" class="btn btn-success" onclick="addRow()">+ Thêm sản phẩm</button>
+            <thead class="table-light">
+                <tr>
+                    <th style="min-width:420px;">Sản phẩm</th>
 
+                    <th style="width:120px;" class="text-end">
+                        Số lượng
+                    </th>
+
+                    <th style="width:180px;" class="text-end">
+                        Đơn giá
+                    </th>
+
+                    <th style="width:180px;" class="text-end">
+                        Thành tiền
+                    </th>
+
+                    <th style="width:70px;"></th>
+                </tr>
+            </thead>
+
+            <tbody>
+            </tbody>
+
+        </table>
+    </div>
+
+    <button type="button" class="btn btn-success mt-3" onclick="addRow()">+ Thêm sản phẩm</button>    
     <hr />
 
-    <button type="submit" class="btn btn-primary">Lưu đơn</button>
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <span class="fw-bold">Tổng tiền hàng</span>
+                <strong id="grandTotal">0 ₫</strong>
+            </div>
+        </div>
+    </div>
+    <div class="sticky-bottom bg-white border-top p-3 shadow-sm">
+        <button type="submit" class="btn btn-primary">Lưu đơn</button>
+    </div>
 </form>
 
 @section Scripts {
@@ -145,14 +167,12 @@
         let row = `
         <tr>
             <td style="min-width:420px;">
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </span>
+                <div class="d-flex gap-2">
+
                     <input type="text"
                            class="form-control product-search"
                            placeholder="Tìm sản phẩm..."
-                            style="max-width:160px;"
+                           style="max-width:160px;"
                            onkeyup="filterProducts(this)" />
 
                     <select name="OrderDetails[${currentIndex}].ProductId"
@@ -160,6 +180,7 @@
                             onchange="loadPrice(this)">
                         ${getProductOptions()}
                     </select>
+
                 </div>
             </td>
             <td style="width:120px">
@@ -182,17 +203,23 @@
             <td class="total text-end money-text">
                 0 ₫
             </td>
-            <td style="width:80px" class="text-center">
-                <button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button>
+            <td class="text-center">
+                <button type="button"
+                        class="btn btn-outline-danger btn-sm"
+                        onclick="removeRow(this)">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
             </td>
-        </tr>
+        </tr> 
         `;
         document.querySelector("#orderDetailsTable tbody").insertAdjacentHTML('beforeend', row);
         index++;
+        calculateGrandTotal();
     }
 
     function removeRow(btn) {
         btn.closest('tr').remove();
+        calculateGrandTotal();
     }
 
     function calculate(input) {
@@ -210,6 +237,8 @@
 
         row.querySelector('.total').innerText =
             total.toLocaleString('vi-VN') + ' ₫';
+
+        calculateGrandTotal();
     }
 
     function loadPrice(select) {
@@ -338,6 +367,23 @@
             }
         }
     }
+
+    function calculateGrandTotal() {
+
+        let total = 0;
+
+        document.querySelectorAll('.total').forEach(td => {
+
+            let value = td.innerText
+                .replace(/[₫.\s]/g, '')
+                .replace(',', '.');
+
+            total += parseFloat(value) || 0;
+        });
+
+        document.getElementById('grandTotal').innerText =
+            total.toLocaleString('vi-VN') + ' ₫';
+    }
 </script>
 }
 
@@ -371,6 +417,15 @@
     .money-text {
         font-weight: 600;
         color: #0f172a;
+    }
+
+    #orderDetailsTable {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    .total {
+        white-space: nowrap;
     }
 
 </style>

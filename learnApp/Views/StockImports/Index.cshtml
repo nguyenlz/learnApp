@@ -1,60 +1,497 @@
 ﻿@model IEnumerable<learnApp.Models.StockImport>
+
 @using learnApp.Helper
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Nhập hàng";
+
+    int totalImports = Model.Count();
+
+    decimal totalMoney = Model.Sum(x => x.TotalAmount);
+
+    int todayImports = Model.Count(x =>
+        x.ImportDate?.Date == DateTime.Today);
 }
 
-<h1>Index</h1>
+<div class="container-fluid py-3">
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ImportDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Employee.EmployeeName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Supplier.SupplierName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TotalAmount)
-            </th>
-            @* <th>
-                @Html.DisplayNameFor(model => model.PaidAmount)
-            </th> *@
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.ImportDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Employee.EmployeeName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Supplier.SupplierName)
-            </td>
-            <td>
-                @CurrencyHelper.ToVnd(item.TotalAmount)
-            </td>
-            @* <td>
-                @CurrencyHelper.ToVnd(item.PaidAmount)
-            </td> *@
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ImportId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ImportId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ImportId">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-box-arrow-in-down text-primary"></i>
+                Quản lý nhập hàng
+            </h2>
+
+            <p class="text-muted mb-0">
+                Theo dõi phiếu nhập kho và công nợ nhà cung cấp
+            </p>
+
+        </div>
+
+        <a asp-action="Create"
+               class="btn btn-primary shadow-sm">
+
+            <i class="bi bi-plus-circle"></i>
+            Tạo phiếu nhập
+
+        </a>
+
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Tổng phiếu nhập
+                            </div>
+
+                            <div class="fs-3 fw-bold">
+                                @totalImports
+                            </div>
+
+                        </div>
+
+                        <div class="summary-icon bg-primary-subtle text-primary">
+
+                            <i class="bi bi-receipt"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Nhập hôm nay
+                            </div>
+
+                            <div class="fs-3 fw-bold text-success">
+                                @todayImports
+                            </div>
+
+                        </div>
+
+                        <div class="summary-icon bg-success-subtle text-success">
+
+                            <i class="bi bi-calendar-check"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Tổng tiền nhập
+                            </div>
+
+                            <div class="fs-4 fw-bold text-danger">
+                                @CurrencyHelper.ToVnd(totalMoney)
+                            </div>
+
+                        </div>
+
+                        <div class="summary-icon bg-danger-subtle text-danger">
+
+                            <i class="bi bi-cash-stack"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- SEARCH -->
+    <form asp-action="Index"
+          method="get"
+          class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-3 align-items-end">
+
+                <div class="col-lg-5">
+
+                    <label class="form-label small text-muted">
+                        Tìm kiếm
+                    </label>
+
+                    <div class="input-group">
+
+                        <span class="input-group-text bg-white">
+                            <i class="bi bi-search"></i>
+                        </span>
+
+                        <input type="search"
+                               name="searchbarinput"
+                               value="@Context.Request.Query["searchbarinput"]"
+                               class="form-control border-start-0"
+                               placeholder="Tên nhà cung cấp..." />
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3">
+
+                    <label class="form-label small text-muted">
+                        Sắp xếp
+                    </label>
+
+                    <select name="sortOrder"
+                            class="form-select"
+                            onchange="this.form.submit()">
+
+                        <option value="">
+                            Mới nhất
+                        </option>
+
+                        <option value="date_asc">
+                            Cũ nhất
+                        </option>
+
+                        <option value="amount_desc">
+                            Tiền giảm dần
+                        </option>
+
+                        <option value="amount_asc">
+                            Tiền tăng dần
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-lg-2">
+
+                    <button type="submit"
+                            class="btn btn-primary w-100">
+
+                        <i class="bi bi-search"></i>
+                        Tìm
+
+                    </button>
+
+                </div>
+
+                <div class="col-lg-2">
+
+                    <a asp-action="Index"
+                           class="btn btn-outline-secondary w-100">
+
+                        <i class="bi bi-arrow-repeat"></i>
+                        Reset
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+    <!-- TABLE -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th width="180">
+                                Mã phiếu
+                            </th>
+
+                            <th width="180">
+                                Ngày nhập
+                            </th>
+
+                            <th>
+                                Nhà cung cấp
+                            </th>
+
+                            <th>
+                                Nhân viên
+                            </th>
+
+                            <th class="text-end">
+                                Tổng tiền
+                            </th>
+
+                            <th width="170"
+                                class="text-center">
+                                Thao tác
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @if (!Model.Any())
+                        {
+                            <tr>
+
+                                <td colspan="6"
+                                    class="text-center py-5">
+
+                                    <div class="text-muted">
+
+                                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+
+                                        Chưa có phiếu nhập nào
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+
+                                <!-- IMPORT CODE -->
+                                <td>
+
+                                    <div class="fw-semibold text-primary">
+
+                                        #NH@(item.ImportId)
+
+                                    </div>
+
+@*                                     <div class="small text-muted">
+
+                                        Phiếu nhập kho
+
+                                    </div> *@
+
+                                </td>
+
+                                <!-- DATE -->
+                                <td>
+
+                                    <div class="fw-semibold">
+
+                                        @item.ImportDate?.ToString("dd/MM/yyyy")
+
+                                    </div>
+
+                                    <div class="small text-muted">
+
+                                        @item.ImportDate?.ToString("HH:mm")
+
+                                    </div>
+
+                                </td>
+
+                                <!-- SUPPLIER -->
+                                <td>
+
+                                    <div class="d-flex align-items-center gap-2">
+
+                                        <div class="supplier-avatar">
+
+                                            <i class="bi bi-building"></i>
+
+                                        </div>
+
+                                        <div>
+
+                                            <div class="fw-semibold">
+
+                                                @item.Supplier?.SupplierName
+
+                                            </div>
+
+                                            <div class="small text-muted">
+
+                                                Nhà cung cấp
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+                                <!-- EMPLOYEE -->
+                                <td>
+
+                                    <div class="text-dark">
+
+                                        @item.Employee?.EmployeeName
+
+                                    </div>
+
+                                </td>
+
+                                <!-- AMOUNT -->
+                                <td class="text-end">
+
+                                    <div class="fw-bold text-danger fs-6">
+
+                                        @CurrencyHelper.ToVnd(item.TotalAmount)
+
+                                    </div>
+
+                                </td>
+
+                                <!-- ACTION -->
+                                <td>
+
+                                    <div class="d-flex justify-content-center gap-2">
+
+                                        <a asp-action="Details"
+                                               asp-route-id="@item.ImportId"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               title="Chi tiết">
+
+                                            <i class="bi bi-eye"></i>
+
+                                        </a>
+
+                                        <a asp-action="Edit"
+                                               asp-route-id="@item.ImportId"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Chỉnh sửa">
+
+                                            <i class="bi bi-pencil-square"></i>
+
+                                        </a>
+
+                                        <a asp-action="Delete"
+                                               asp-route-id="@item.ImportId"
+                                               class="btn btn-sm btn-outline-danger"
+                                               title="Xóa">
+
+                                            <i class="bi bi-trash"></i>
+
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+    body {
+        background: #f5f7fb;
+    }
+
+    .summary-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    .supplier-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #475569;
+        flex-shrink: 0;
+    }
+
+    .table thead th {
+        white-space: nowrap;
+        font-size: 14px;
+        font-weight: 700;
+        color: #475569;
+        border-bottom-width: 1px;
+    }
+
+    .table tbody td {
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+
+    .card {
+        border-radius: 16px;
+    }
+
+    .btn {
+        border-radius: 10px;
+    }
+
+</style>

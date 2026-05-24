@@ -5,117 +5,374 @@
     ViewData["Title"] = "Đơn hàng";
 }
 
-<h2>Tìm kiếm đơn hàng</h2>
-<form asp-action="Index" method="get" class="card shadow-sm p-3 mb-3">
+<div class="container-fluid py-3">
 
-    <!-- SEARCH BAR -->
-    <div class="mb-3">
-        <div class="input-group">
-            <input type="search" name="searchbarinput"
-                   value="@Context.Request.Query["searchbarinput"]"
-                   class="form-control"
-                   placeholder="Tìm theo mã đơn, tên khách hàng..." />
+    <!-- HEADER -->
+    <div class="sticky-top z-3 page-header mb-4">
 
-            <button type="submit" class="btn btn-primary px-4">
-                <i class="fa-solid fa-magnifying-glass"></i> Tìm
-            </button>
-        </div>
-    </div>
+        <div class="d-flex justify-content-between align-items-center">
 
-    <!-- FILTER ROW -->
-    <div class="row g-3 align-items-end">
+            <div>
+                <h2 class="fw-bold mb-1">
+                    🧾 Quản lý đơn hàng
+                </h2>
 
-        <!-- FROM DATE -->
-        <div class="col-md-4">
-            <label class="form-label fw-semibold">Từ ngày</label>
-            <input type="date" name="fromDate"
-                   value="@Context.Request.Query["fromDate"]"
-                   class="form-control" />
-        </div>
+                <div class="text-muted small">
+                    Theo dõi và quản lý đơn hàng khách hàng
+                </div>
+            </div>
 
-        <!-- TO DATE -->
-        <div class="col-md-4">
-            <label class="form-label fw-semibold">Đến ngày</label>
-            <input type="date" name="toDate"
-                   value="@Context.Request.Query["toDate"]"
-                   class="form-control" />
-        </div>
+            <a asp-action="Create"
+                   class="btn btn-primary shadow-sm">
 
-        <!-- ACTION BUTTONS -->
-        <div class="col-md-4 d-flex gap-2">
-            <button type="submit" class="btn btn-success w-100">
-                Lọc dữ liệu
-            </button>
+                <i class="bi bi-plus-circle"></i>
+                Tạo đơn hàng
 
-            <a asp-action="Index" class="btn btn-outline-secondary w-100">
-                Reset
             </a>
+
         </div>
 
     </div>
-</form>
-<br />
-<h2>Danh sách các đơn hàng</h2>
-<p>
-    <a asp-action="Create" class="btn btn-primary">Thêm đơn hàng</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                Ngày đặt hàng
-            </th>
-            <th>
-                Tên khách hàng
-            </th>
-            <th>
-                Tổng tiền
-            </th>            
-            <th>
-                Nhân viên lập hóa đơn
-            </th>
-            @* <th>
-                Trạng thái
-            </th> *@
-            <th>
-                Thanh toán
-            </th>
-            <th>
-                Tên công trình
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.OrderDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Customer.CustomerName)
-            </td>
-            <td>
-                @CurrencyHelper.ToVnd(item.TotalAmount)
-            </td>            
-            <td>
-                @Html.DisplayFor(modelItem => item.Employee.EmployeeName)
-            </td>
-            @* <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td> *@
-            <td>
-                @Html.DisplayFor(modelItem => item.PaymentStatus)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Site.Name)
-            </td>
-            <td>
-                @* <a asp-action="Edit" asp-route-id="@item.OrderId">Edit</a> | *@
-                <a asp-action="Details" asp-route-id="@item.OrderId">Xem</a> |
-                <a asp-action="Delete" asp-route-id="@item.OrderId">Xóa</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+
+    <!-- FILTER -->
+    <form asp-action="Index"
+          method="get"
+          class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-3 align-items-end">
+
+                <!-- SEARCH -->
+                <div class="col-md-4">
+
+                    <label class="form-label small fw-semibold text-muted mb-2">
+                        Tìm kiếm
+                    </label>
+
+                    <div class="input-group">
+
+                        <span class="input-group-text bg-white">
+                            <i class="bi bi-search"></i>
+                        </span>
+
+                        <input type="search"
+                               name="searchbarinput"
+                               value="@Context.Request.Query["searchbarinput"]"
+                               class="form-control border-start-0"
+                               placeholder="Mã đơn, khách hàng..." />
+
+                    </div>
+
+                </div>
+
+                <!-- FROM DATE -->
+                <div class="col-md-2">
+
+                    <label class="form-label small fw-semibold text-muted mb-2">
+                        Từ ngày
+                    </label>
+
+                    <input type="date"
+                           name="fromDate"
+                           value="@Context.Request.Query["fromDate"]"
+                           class="form-control" />
+
+                </div>
+
+                <!-- TO DATE -->
+                <div class="col-md-2">
+
+                    <label class="form-label small fw-semibold text-muted mb-2">
+                        Đến ngày
+                    </label>
+
+                    <input type="date"
+                           name="toDate"
+                           value="@Context.Request.Query["toDate"]"
+                           class="form-control" />
+
+                </div>
+
+                <!-- ACTION -->
+                <div class="col-md-2">
+                    <button type="submit"
+                            class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i>
+                        Tìm
+                    </button>                    
+                </div>
+                <div class="col-md-2">
+                    <a asp-action="Index"
+                           class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-repeat"></i>
+                        Reset
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </form>
+
+    <!-- TABLE -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body p-0">
+
+            <!-- TABLE HEADER -->
+            <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+
+                <div>
+
+                    <h5 class="fw-bold mb-1">
+                        Danh sách đơn hàng
+                    </h5>
+
+                    <div class="text-muted small">
+                        Tổng cộng @Model.Count() đơn hàng
+                    </div>
+
+                </div>
+
+                <form asp-action="Index" method="get">
+                    <select name="sortOrder"
+                            class="form-select"
+                            onchange="this.form.submit()">
+
+                        <option value="">
+                            Mới nhất
+                        </option>
+
+                        <option value="date_asc">
+                            Cũ nhất
+                        </option>
+
+                        <option value="amount_desc">
+                            Tiền giảm dần
+                        </option>
+
+                        <option value="amount_asc">
+                            Tiền tăng dần
+                        </option>
+
+                    </select>
+                </form>
+
+            </div>
+
+            <!-- TABLE -->
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0 order-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Mã đơn</th>
+
+                            <th>Khách hàng</th>
+
+                            <th>Công trình</th>
+
+                            <th>Ngày đặt</th>
+
+                            <th>Trạng thái</th>
+
+                            <th class="text-end">
+                                Tổng tiền
+                            </th>
+
+                            <th class="text-center">
+                                Thao tác
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+
+                                <!-- ORDER ID -->
+                                <td>
+
+                                    <div class="fw-semibold text-primary">
+                                        #DH@(item.OrderId)
+                                    </div>
+
+                                </td>
+
+                                <!-- CUSTOMER -->
+                                <td>
+
+                                    <div class="fw-semibold">
+                                        @item.Customer.CustomerName
+                                    </div>
+
+                                </td>
+
+                                <!-- SITE -->
+                                <td>
+
+                                    @if (item.Site != null)
+                                    {
+                                        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
+                                            @item.Site.Name
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            Không có
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <!-- DATE -->
+                                <td>
+
+                                    <div class="fw-medium">
+                                        @(item.OrderDate?.ToString("dd/MM/yyyy"))
+                                    </div>
+
+                                    <small class="text-muted">
+                                        @(item.OrderDate?.ToString("HH:mm"))
+                                    </small>
+
+                                </td>
+
+                                <!-- STATUS -->
+                                <td>
+
+                                    @if (item.PaymentStatus.ToString() == "Paid")
+                                    {
+                                        <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
+                                            Đã thanh toán
+                                        </span>
+                                    }
+                                    else if (item.PaymentStatus.ToString() == "Partial")
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning px-3 py-2 rounded-pill">
+                                            Thanh toán một phần
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">
+                                            Chưa thanh toán
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <!-- TOTAL -->
+                                <td class="text-end">
+
+                                    <div class="fw-bold text-primary">
+                                        @CurrencyHelper.ToVnd(item.TotalAmount)
+                                    </div>
+
+                                </td>
+
+                                <!-- ACTION -->
+                                <td>
+
+                                    <div class="d-flex justify-content-center gap-2">
+
+                                        <a asp-action="Details"
+                                               asp-route-id="@item.OrderId"
+                                               class="btn btn-sm btn-outline-secondary">
+
+                                            <i class="bi bi-eye"></i>
+
+                                        </a>
+
+                                        <a asp-action="Edit"
+                                               asp-route-id="@item.OrderId"
+                                               class="btn btn-sm btn-outline-primary">
+
+                                            <i class="bi bi-pencil-square"></i>
+
+                                        </a>
+
+                                        <a asp-action="Delete"
+                                               asp-route-id="@item.OrderId"
+                                               class="btn btn-sm btn-outline-danger">
+
+                                            <i class="bi bi-trash"></i>
+
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+    .page-header {
+        top: 0;
+        background: rgba(245,247,251,.9);
+        backdrop-filter: blur(10px);
+        padding: 8px 0;
+    }
+
+    .card {
+        overflow: hidden;
+        border-radius: 16px;
+    }
+
+    .btn {
+        border-radius: 10px;
+    }
+
+    .order-table thead th {
+        background: #f8fafc;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 700;
+        border: none;
+        padding: 14px 16px;
+        white-space: nowrap;
+    }
+
+    .order-table tbody td {
+        padding: 14px 16px;
+        border-color: #f1f3f5;
+        vertical-align: middle;
+    }
+
+    .order-table tbody tr {
+        transition: .15s;
+    }
+
+        .order-table tbody tr:hover {
+            background: #fafafa;
+        }
+
+    .badge {
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+</style>

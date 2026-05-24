@@ -1,49 +1,591 @@
-﻿@model learnApp.Models.Order
+﻿@model learnApp.ViewModels.OrderCreateViewModel
+@using learnApp.Helper
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Chỉnh sửa đơn hàng";
 }
 
-<h1>Edit</h1>
+<h2 class="mb-4 fw-bold">
+    <i class="bi bi-pencil-square text-primary"></i>
+    Chỉnh sửa đơn hàng
+</h2>
 
-<h4>Order</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="OrderId" />
-            <div class="form-group">
-                <label asp-for="CustomerId" class="control-label"></label>
-                <select asp-for="CustomerId" class="form-control" asp-items="ViewBag.CustomerId"></select>
-                <span asp-validation-for="CustomerId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="EmployeeId" class="control-label"></label>
-                <select asp-for="EmployeeId" class="form-control" asp-items="ViewBag.EmployeeId"></select>
-                <span asp-validation-for="EmployeeId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="OrderDate" class="control-label"></label>
-                <input asp-for="OrderDate" class="form-control" />
-                <span asp-validation-for="OrderDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="TotalAmount" class="control-label"></label>
-                <input asp-for="TotalAmount" class="form-control" />
-                <span asp-validation-for="TotalAmount" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["Error"]
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert">
+        </button>
     </div>
-</div>
+}
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<form asp-action="Edit" onsubmit="beforeSubmit()">
+
+    <input type="hidden" asp-for="Order.OrderId" />
+
+    <!-- THÔNG TIN ĐƠN -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+
+            <h5 class="card-section-title">
+                Thông tin đơn hàng
+            </h5>
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <label class="form-label-custom">
+                        Khách hàng
+                    </label>
+
+                    <select asp-for="Order.CustomerId"
+                            class="form-select"
+                            asp-items="ViewBag.CustomerId"
+                            onchange="loadSites(this)">
+                        <option value="">-- Chọn khách hàng --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label-custom">
+                        Nhân viên
+                    </label>
+
+                    <select asp-for="Order.EmployeeId"
+                            class="form-select"
+                            asp-items="ViewBag.EmployeeId">
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label-custom">
+                        Công trình
+                    </label>
+
+                    <select asp-for="Order.SiteId"
+                            class="form-select">
+                        <option value="">-- Chọn công trình --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label-custom">
+                        Ngày tạo đơn
+                    </label>
+
+                    <input asp-for="Order.OrderDate"
+                           type="datetime-local"
+                           class="form-control" />
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- DANH SÁCH SP -->
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <h5 class="card-section-title mb-0">
+                    Danh sách sản phẩm
+                </h5>
+
+                <button type="button"
+                        class="btn btn-success"
+                        onclick="addRow()">
+                    <i class="bi bi-plus-circle"></i>
+                    Thêm sản phẩm
+                </button>
+
+            </div>
+
+            <div class="table-responsive border rounded">
+
+                <table class="table align-middle mb-0"
+                       id="orderDetailsTable">
+
+                    <thead class="table-light">
+                        <tr>
+
+                            <th style="min-width:420px;">
+                                Sản phẩm
+                            </th>
+
+                            <th style="width:120px;"
+                                class="text-end">
+                                Số lượng
+                            </th>
+
+                            <th style="width:180px;"
+                                class="text-end">
+                                Đơn giá
+                            </th>
+
+                            <th style="width:180px;"
+                                class="text-end">
+                                Thành tiền
+                            </th>
+
+                            <th style="width:70px;"></th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @{
+                            int i = 0;
+                        }
+
+                        @foreach (var item in Model.OrderDetails)
+                        {
+                            var thanhTien = item.Quantity * item.UnitPrice;
+
+                            <tr>
+
+                                <td style="min-width:420px;">
+
+                                    <div class="d-flex gap-2">
+
+                                        <input type="text"
+                                               class="form-control product-search"
+                                               placeholder="Tìm..."
+                                               style="max-width:150px;"
+                                               onkeyup="filterProducts(this)" />
+
+                                        <select name="OrderDetails[@i].ProductId"
+                                                class="form-select"
+                                                onchange="loadPrice(this)">
+
+                                            @Html.Raw(ViewBag.ProductOptions)
+
+                                        </select>
+
+                                    </div>
+
+                                </td>
+
+                                <td>
+                                    <input name="OrderDetails[@i].Quantity"
+                                           type="number"
+                                           step="any"
+                                           class="form-control text-end"
+                                           value="@item.Quantity"
+                                           onchange="calculate(this)" />
+                                </td>
+
+                                <td>
+                                    <input name="OrderDetails[@i].UnitPrice"
+                                           type="text"
+                                           class="form-control text-end"
+                                           value="@item.UnitPrice.ToString("N0")"
+                                           onfocus="unformatPrice(this)"
+                                           onblur="formatPrice(this)"
+                                           onchange="calculate(this)" />
+                                </td>
+
+                                <td class="total text-end fw-semibold">
+                                    @CurrencyHelper.ToVnd(thanhTien)
+                                </td>
+
+                                <td class="text-center">
+
+                                    <button type="button"
+                                            class="btn btn-outline-danger btn-sm"
+                                            onclick="removeRow(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+
+                                </td>
+
+                            </tr>
+
+                            i++;
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- SUMMARY -->
+            <div class="row justify-content-end mt-4">
+
+                <div class="col-md-4">
+
+                    <div class="card bg-light border-0">
+
+                        <div class="card-body">
+
+                            <div class="d-flex justify-content-between">
+
+                                <span class="fw-semibold">
+                                    Tổng tiền:
+                                </span>
+
+                                <strong id="grandTotal"
+                                        class="text-danger fs-5">
+                                    0 ₫
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ACTION -->
+    <div class="sticky-bottom bg-white border-top p-3 mt-4 shadow-sm">
+
+        <div class="d-flex justify-content-end gap-2">
+
+            <a asp-action="Index"
+                   class="btn btn-outline-secondary">
+                Quay lại
+            </a>
+
+            <button type="submit"
+                    class="btn btn-primary">
+                <i class="bi bi-floppy"></i>
+                Lưu thay đổi
+            </button>
+
+        </div>
+
+    </div>
+
+</form>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+
+        let index = @Model.OrderDetails.Count;
+
+        document.addEventListener("DOMContentLoaded", () => {
+
+            initSelectedProducts();
+
+            calculateGrandTotal();
+
+            loadInitialSites();
+        });
+
+        function addRow() {
+
+            let currentIndex = index;
+
+            let row = `
+            <tr>
+
+                <td style="min-width:420px;">
+
+                    <div class="d-flex gap-2">
+
+                        <input type="text"
+                               class="form-control product-search"
+                               placeholder="Tìm..."
+                               style="max-width:150px;"
+                               onkeyup="filterProducts(this)" />
+
+                        <select name="OrderDetails[${currentIndex}].ProductId"
+                                class="form-select"
+                                onchange="loadPrice(this)">
+                            ${getProductOptions()}
+                        </select>
+
+                    </div>
+
+                </td>
+
+                <td>
+                    <input name="OrderDetails[${currentIndex}].Quantity"
+                           type="number"
+                           step="any"
+                           class="form-control text-end"
+                           value="1"
+                           onchange="calculate(this)" />
+                </td>
+
+                <td>
+                    <input name="OrderDetails[${currentIndex}].UnitPrice"
+                           type="text"
+                           class="form-control text-end"
+                           value="0"
+                           onfocus="unformatPrice(this)"
+                           onblur="formatPrice(this)"
+                           onchange="calculate(this)" />
+                </td>
+
+                <td class="total text-end fw-semibold">
+                    0 ₫
+                </td>
+
+                <td class="text-center">
+
+                    <button type="button"
+                            class="btn btn-outline-danger btn-sm"
+                            onclick="removeRow(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+
+                </td>
+
+            </tr>
+            `;
+
+            document.querySelector("#orderDetailsTable tbody")
+                .insertAdjacentHTML('beforeend', row);
+
+            index++;
+
+            calculateGrandTotal();
+        }
+
+        function removeRow(btn) {
+
+            btn.closest('tr').remove();
+
+            calculateGrandTotal();
+        }
+
+        function calculate(input) {
+
+            let row = input.closest('tr');
+
+            let qty = parseFloat(
+                row.querySelector('[name*="Quantity"]').value
+            ) || 0;
+
+            let price = parseInt(
+                row.querySelector('[name*="UnitPrice"]')
+                    .value
+                    .replace(/\./g, '')
+            ) || 0;
+
+            let total = qty * price;
+
+            row.querySelector('.total').innerText =
+                total.toLocaleString('vi-VN') + ' ₫';
+
+            calculateGrandTotal();
+        }
+
+        function calculateGrandTotal() {
+
+            let total = 0;
+
+            document.querySelectorAll('.total')
+                .forEach(td => {
+
+                    let value = td.innerText
+                        .replace(/[₫.\s]/g, '');
+
+                    total += parseInt(value) || 0;
+                });
+
+            document.getElementById('grandTotal').innerText =
+                total.toLocaleString('vi-VN') + ' ₫';
+        }
+
+        function loadPrice(select) {
+
+            let row = select.closest('tr');
+
+            let price = parseInt(
+                select.options[select.selectedIndex]
+                    .getAttribute("data-price")
+            ) || 0;
+
+            let input = row.querySelector('[name*="UnitPrice"]');
+
+            input.value = price;
+
+            formatPrice(input);
+
+            calculate(input);
+        }
+
+        function formatPrice(input) {
+
+            let value = parseInt(
+                input.value.replace(/\./g, '')
+            ) || 0;
+
+            input.value = value.toLocaleString('vi-VN');
+        }
+
+        function unformatPrice(input) {
+
+            input.value = input.value.replace(/\./g, '');
+        }
+
+        function beforeSubmit() {
+
+            document.querySelectorAll('[name*="UnitPrice"]')
+                .forEach(input => {
+
+                    input.value =
+                        input.value.replace(/\./g, '');
+                });
+        }
+
+        function getProductOptions() {
+
+            return `@Html.Raw(ViewBag.ProductOptions)`;
+        }
+
+        function removeVietnameseTones(str) {
+
+            return str
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/đ/g, "d")
+                .replace(/Đ/g, "D")
+                .toLowerCase();
+        }
+
+        function filterProducts(input) {
+
+            let keyword = removeVietnameseTones(input.value);
+
+            let select = input.parentElement.querySelector('select');
+
+            for (let option of select.options) {
+
+                let text = removeVietnameseTones(option.text);
+
+                option.hidden = !text.includes(keyword);
+            }
+        }
+
+        function loadSites(select) {
+
+            let customerId = select.value;
+
+            fetch('@Url.Action("GetSitesByCustomer", "Orders")?customerId=' + customerId)
+                .then(res => res.json())
+                .then(data => {
+
+                    let siteSelect =
+                        document.querySelector('[name="Order.SiteId"]');
+
+                    siteSelect.innerHTML =
+                        '<option value="">-- Chọn công trình --</option>';
+
+                    data.forEach(site => {
+
+                        let option = document.createElement("option");
+
+                        option.value = site.siteId;
+                        option.textContent = site.name;
+
+                        siteSelect.appendChild(option);
+                    });
+                });
+        }
+
+        function loadInitialSites() {
+
+            let customerSelect =
+                document.querySelector('[name="Order.CustomerId"]');
+
+            let customerId = customerSelect.value;
+
+            if (!customerId) return;
+
+            fetch('@Url.Action("GetSitesByCustomer", "Orders")?customerId=' + customerId)
+                .then(res => res.json())
+                .then(data => {
+
+                    let siteSelect =
+                        document.querySelector('[name="Order.SiteId"]');
+
+                    let selectedSiteId = '@Model.Order.SiteId';
+
+                    siteSelect.innerHTML =
+                        '<option value="">-- Chọn công trình --</option>';
+
+                    data.forEach(site => {
+
+                        let option = document.createElement("option");
+
+                        option.value = site.siteId;
+                        option.textContent = site.name;
+
+                        if (site.siteId == selectedSiteId) {
+                            option.selected = true;
+                        }
+
+                        siteSelect.appendChild(option);
+                    });
+                });
+        }
+
+        function initSelectedProducts() {
+
+            let rows = document.querySelectorAll("#orderDetailsTable tbody tr");
+
+            rows.forEach((row, i) => {
+
+                let productId =
+                    '@string.Join(",", Model.OrderDetails.Select(x => x.ProductId))'
+                        .split(',')[i];
+
+                let select = row.querySelector('select');
+
+                select.value = productId;
+            });
+        }
+
+    </script>
 }
+
+<style>
+
+    .form-label-custom {
+        font-size: 15px;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .card-section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    #orderDetailsTable {
+        table-layout: fixed;
+    }
+
+        #orderDetailsTable th,
+        #orderDetailsTable td {
+            vertical-align: middle;
+        }
+
+    .total {
+        white-space: nowrap;
+    }
+
+    .product-search {
+        min-width: 140px;
+    }
+
+</style>

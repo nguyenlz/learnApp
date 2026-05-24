@@ -1,82 +1,493 @@
 ﻿@model IEnumerable<learnApp.Models.Product>
 @using learnApp.Helper
+
 @{
     ViewData["Title"] = "Sản phẩm";
+
+    int totalProducts = Model.Count();
+
+    int outOfStock = Model.Count(x =>
+        (x.StockQuantity ?? 0) <= 0);
+
+    int lowStock = Model.Count(x =>
+        (x.StockQuantity ?? 0) > 0 &&
+        (x.StockQuantity ?? 0) < 10);
 }
 
-<h1>Sản phẩm</h1>
-<p>
-    <a asp-action="Create">Tạo mới</a>
-</p>
-<form asp-action="Index" method="get" class="card shadow-sm p-3 mb-3">
-    <div class="mb-3">
-        <div class="input-group">
-            <input type="search" name="searchbarinput"
-                   value="@Context.Request.Query["searchbarinput"]"
-                   class="form-control"
-                   placeholder="Nhập từ khóa..." />
+<div class="container-fluid py-3">
 
-            <button type="submit" class="btn btn-primary px-4">
-                <i class="fa-solid fa-magnifying-glass"></i> Tìm
-            </button>
-            <a asp-action="Index" class="btn btn-outline-secondary">
-                Reset
-            </a>
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-box-seam text-primary"></i>
+                Quản lý sản phẩm
+            </h2>
+
+            <p class="text-muted mb-0">
+                Quản lý danh sách sản phẩm, tồn kho và giá bán
+            </p>
         </div>
-    </div>
-</form>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ProductName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Unit)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Price)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.StockQuantity)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Category.CategoryName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Supplier.SupplierName)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.ProductName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Unit)
-            </td>
-            <td>
-                @CurrencyHelper.ToVnd(item.Price)
-            </td>
-            <td>
-                @CurrencyHelper.FormatQuantity(item.StockQuantity)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Category.CategoryName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Supplier.SupplierName)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ProductId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ProductId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ProductId">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+        <a asp-action="Create"
+               class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-circle"></i>
+            Thêm sản phẩm
+        </a>
+
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <div class="text-muted small">
+                                Tổng sản phẩm
+                            </div>
+
+                            <div class="fs-3 fw-bold">
+                                @totalProducts
+                            </div>
+                        </div>
+
+                        <div class="summary-icon bg-primary-subtle text-primary">
+                            <i class="bi bi-box"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <div class="text-muted small">
+                                Sắp hết hàng
+                            </div>
+
+                            <div class="fs-3 fw-bold text-warning">
+                                @lowStock
+                            </div>
+                        </div>
+
+                        <div class="summary-icon bg-warning-subtle text-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <div class="text-muted small">
+                                Hết hàng
+                            </div>
+
+                            <div class="fs-3 fw-bold text-danger">
+                                @outOfStock
+                            </div>
+                        </div>
+
+                        <div class="summary-icon bg-danger-subtle text-danger">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- SEARCH -->
+    <form asp-action="Index"
+          method="get"
+          class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-3 align-items-end">
+
+                <div class="col-md-5">
+
+                    <div class="input-group">
+
+                        <span class="input-group-text bg-white">
+                            <i class="bi bi-search"></i>
+                        </span>
+
+                        <input type="search"
+                               name="searchbarinput"
+                               value="@Context.Request.Query["searchbarinput"]"
+                               class="form-control border-start-0"
+                               placeholder="Tìm theo tên sản phẩm..." />
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label class="form-label small text-muted">
+                        Sắp xếp
+                    </label>
+
+                    <select name="sortOrder"
+                            class="form-select"
+                            onchange="this.form.submit()">
+
+                        <option value="">
+                            Tên A-Z
+                        </option>
+
+                        <option value="name_desc"
+                                selected="@(ViewBag.CurrentSort == "name_desc")">
+                            Tên Z-A
+                        </option>
+
+                        <option value="price_asc"
+                                selected="@(ViewBag.CurrentSort == "price_asc")">
+                            Giá tăng dần
+                        </option>
+
+                        <option value="price_desc"
+                                selected="@(ViewBag.CurrentSort == "price_desc")">
+                            Giá giảm dần
+                        </option>
+
+                        <option value="stock_asc"
+                                selected="@(ViewBag.CurrentSort == "stock_asc")">
+                            Tồn kho tăng dần
+                        </option>
+
+                        <option value="stock_desc"
+                                selected="@(ViewBag.CurrentSort == "stock_desc")">
+                            Tồn kho giảm dần
+                        </option>
+
+                        <option value="newest"
+                                selected="@(ViewBag.CurrentSort == "newest")">
+                            Mới nhất
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <button type="submit"
+                            class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i>
+                        Tìm kiếm
+                    </button>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <a asp-action="Index"
+                           class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Làm mới
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+    <!-- TABLE -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th style="min-width:320px;">
+                                Sản phẩm
+                            </th>
+
+                            <th>
+                                Danh mục
+                            </th>
+
+                            <th>
+                                Nhà cung cấp
+                            </th>
+
+                            <th class="text-end">
+                                Giá bán
+                            </th>
+
+                            <th class="text-center">
+                                Tồn kho
+                            </th>
+
+                            <th width="160"
+                                class="text-center">
+                                Thao tác
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @if (!Model.Any())
+                        {
+                            <tr>
+
+                                <td colspan="6"
+                                    class="text-center py-5">
+
+                                    <div class="text-muted">
+
+                                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+
+                                        Chưa có sản phẩm nào
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+
+                                <!-- PRODUCT -->
+                                <td>
+
+                                    <div class="d-flex align-items-center gap-3">
+
+                                        <!-- THUMB -->
+                                        <div class="product-thumb">
+
+                                            <i class="bi bi-box-seam"></i>
+
+                                        </div>
+
+                                        <!-- INFO -->
+                                        <div>
+
+                                            <div class="fw-semibold product-name">
+                                                @item.ProductName
+                                            </div>
+
+                                            <div class="small text-muted">
+                                                Đơn vị:
+                                                @item.Unit
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+                                <!-- CATEGORY -->
+                                <td>
+
+                                    <span class="badge bg-light text-dark border">
+                                        @item.Category?.CategoryName
+                                    </span>
+
+                                </td>
+
+                                <!-- SUPPLIER -->
+                                <td>
+
+                                    <div class="text-muted">
+                                        @item.Supplier?.SupplierName
+                                    </div>
+
+                                </td>
+
+                                <!-- PRICE -->
+                                <td class="text-end">
+
+                                    <div class="fw-bold text-danger">
+                                        @CurrencyHelper.ToVnd(item.Price)
+                                    </div>
+
+                                </td>
+
+                                <!-- STOCK -->
+                                <td class="text-center">
+
+                                    @{
+                                        decimal stock = item.StockQuantity ?? 0;
+                                    }
+
+                                    @if (stock <= 0)
+                                    {
+                                        <span class="badge bg-danger">
+                                            Hết hàng
+                                        </span>
+                                    }
+                                    else if (stock < 10)
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            @CurrencyHelper.FormatQuantity(stock)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">
+                                            @CurrencyHelper.FormatQuantity(stock)
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <!-- ACTION -->
+                                <td>
+
+                                    <div class="d-flex justify-content-center gap-2">
+
+                                        <a asp-action="Details"
+                                               asp-route-id="@item.ProductId"
+                                               class="btn btn-sm btn-outline-secondary"
+                                               title="Chi tiết">
+
+                                            <i class="bi bi-eye"></i>
+
+                                        </a>
+
+                                        <a asp-action="Edit"
+                                               asp-route-id="@item.ProductId"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Chỉnh sửa">
+
+                                            <i class="bi bi-pencil-square"></i>
+
+                                        </a>
+
+                                        <a asp-action="Delete"
+                                               asp-route-id="@item.ProductId"
+                                               class="btn btn-sm btn-outline-danger"
+                                               title="Xóa">
+
+                                            <i class="bi bi-trash"></i>
+
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+    .summary-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    .product-thumb {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        color: #475569;
+        flex-shrink: 0;
+    }
+
+    .product-name {
+        color: #0f172a;
+        font-size: 15px;
+    }
+
+    .table thead th {
+        white-space: nowrap;
+        font-size: 14px;
+        font-weight: 700;
+        color: #475569;
+        border-bottom-width: 1px;
+    }
+
+    .table tbody td {
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+
+    .card {
+        border-radius: 16px;
+    }
+
+    .btn {
+        border-radius: 10px;
+    }
+
+</style>

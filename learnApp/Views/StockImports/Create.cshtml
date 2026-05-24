@@ -1,171 +1,662 @@
 ﻿@model learnApp.Models.StockImport
 
-<h2>Nhập hàng</h2>
+<div class="sticky-top bg-white border-bottom z-3 shadow-sm"
+     style="
+    top:0;
+    backdrop-filter:blur(12px);
+    background:rgba(255,255,255,0.92);
+    ">
 
-<form asp-action="Create" method="post" onsubmit="beforeSubmit()">
-    <div class="row mb-3">
-        <div class="col-md-4">
-            <label>Nhà cung cấp</label>
-            <select asp-for="SupplierId" class="form-control" asp-items="ViewBag.SupplierId" onchange="onSupplierChange()">
-                <option value="">-- Chọn nhà cung cấp --</option>
-            </select>
+    <div class="container py-3">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+                <h3 class="fw-bold mb-1">
+                    📦 Nhập hàng
+                </h3>
+
+                <div class="text-muted small">
+                    Tạo phiếu nhập hàng mới
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-4">
+
+                <div class="text-end">
+                    <div class="small text-muted">
+                        Tổng tiền
+                    </div>
+
+                    <div class="fw-bold text-primary fs-4"
+                         id="headerTotal">
+                        0 ₫
+                    </div>
+                </div>
+
+                <button type="submit"
+                        form="stockImportForm"
+                        class="btn btn-primary rounded-pill px-4 shadow-sm">
+
+                    💾 Lưu phiếu nhập
+
+                </button>
+
+            </div>
+
         </div>
 
-        <div class="col-md-4">
-            <label>Nhân viên</label>
-            <select asp-for="EmployeeId" class="form-control" asp-items="ViewBag.EmployeeId"></select>
-        </div>
     </div>
 
-    <hr />
+</div>
 
-    <h4>Danh sách sản phẩm</h4>
+<div class="container py-4">
 
-    <table class="table table-bordered" id="productTable">
-        <thead>
-            <tr>
-                <th>Sản phẩm</th>
-                <th>Số lượng</th>
-                <th>Giá nhập</th>
-                <th>Thành tiền</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <form asp-action="Create"
+          method="post"
+          id="stockImportForm"
+          onsubmit="beforeSubmit()">
 
-    <button type="button" class="btn btn-success" onclick="addRow()">+ Thêm sản phẩm</button>
+        <div class="row g-4">
 
-    <hr />
+            <!-- LEFT -->
+            <div class="col-lg-8">
 
-    <div class="row">
-        <div class="col-md-4">
-            @* <label>Tổng tiền</label> *@
-            <input asp-for="TotalAmount" class="form-control" id="totalAmount" type="hidden" />
+                <!-- INFO -->
+                <div class="card border-0 shadow-sm mb-4">
+
+                    <div class="card-body p-4">
+
+                        <h5 class="fw-semibold mb-4">
+                            🏢 Thông tin nhập hàng
+                        </h5>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-medium">
+                                    Nhà cung cấp
+                                </label>
+
+                                <select asp-for="SupplierId"
+                                        class="form-select form-select-lg"
+                                        asp-items="ViewBag.SupplierId"
+                                        onchange="onSupplierChange()">
+
+                                    <option value="">
+                                        -- Chọn nhà cung cấp --
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-medium">
+                                    Nhân viên
+                                </label>
+
+                                <select asp-for="EmployeeId"
+                                        class="form-select form-select-lg"
+                                        asp-items="ViewBag.EmployeeId">
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- PRODUCT -->
+                <div class="card border-0 shadow-sm">
+
+                    <div class="card-body p-4">
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+
+                            <div>
+
+                                <h5 class="fw-semibold mb-1">
+                                    🛒 Danh sách sản phẩm
+                                </h5>
+
+                                <div class="small text-muted">
+                                    Thêm sản phẩm vào phiếu nhập
+                                </div>
+
+                            </div>
+
+                            <button type="button"
+                                    class="btn btn-success rounded-pill px-4"
+                                    onclick="addRow()">
+
+                                + Thêm sản phẩm
+
+                            </button>
+
+                        </div>
+
+                        <div class="table-responsive">
+
+                            <table class="table align-middle"
+                                   id="productTable">
+
+                                <thead class="table-light">
+
+                                    <tr>
+                                        <th style="width:40%">
+                                            Sản phẩm
+                                        </th>
+
+                                        <th style="width:15%">
+                                            Số lượng
+                                        </th>
+
+                                        <th style="width:20%">
+                                            Giá nhập
+                                        </th>
+
+                                        <th style="width:20%">
+                                            Thành tiền
+                                        </th>
+
+                                        <th style="width:5%">
+                                        </th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody id="productTableBody">
+
+                                    <tr id="emptyRow">
+
+                                        <td colspan="5"
+                                            class="text-center py-5">
+
+                                            <div class="text-muted">
+
+                                                <div style="font-size:50px">
+                                                    📦
+                                                </div>
+
+                                                <div class="fw-semibold mt-2">
+                                                    Chưa có sản phẩm nào
+                                                </div>
+
+                                                <small>
+                                                    Hãy thêm sản phẩm vào phiếu nhập
+                                                </small>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-lg-4">
+
+                <div class="card border-0 shadow-sm sticky-top"
+                     style="top:90px">
+
+                    <div class="card-body p-4">
+
+                        <h5 class="fw-semibold mb-4">
+                            💰 Tổng kết
+                        </h5>
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span class="text-muted">
+                                Tổng sản phẩm
+                            </span>
+
+                            <span class="fw-semibold"
+                                  id="totalItems">
+                                0
+                            </span>
+
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span class="text-muted">
+                                Tổng số lượng
+                            </span>
+
+                            <span class="fw-semibold"
+                                  id="totalQty">
+                                0
+                            </span>
+
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <span class="fw-semibold fs-5">
+                                Tổng tiền
+                            </span>
+
+                            <span class="fw-bold text-primary fs-3"
+                                  id="displayTotal">
+                                0 ₫
+                            </span>
+
+                        </div>
+
+                        <input asp-for="TotalAmount"
+                               id="totalAmount"
+                               type="hidden" />
+
+                        <input asp-for="PaidAmount"
+                               id="paidAmount"
+                               type="hidden"
+                               value="0" />
+
+                        <input asp-for="DebtAmount"
+                               id="debtAmount"
+                               type="hidden" />
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
 
-        <div class="col-md-4">
-            @* <label>Đã trả</label> *@
-            <input asp-for="PaidAmount" class="form-control" id="paidAmount" type="hidden" value="0" />
-        </div>
+    </form>
 
-        <div class="col-md-4">
-            @* <label>Còn nợ</label> *@
-            <input asp-for="DebtAmount" class="form-control" id="debtAmount" type="hidden" />
-        </div>
-    </div>
+</div>
 
-    <br />
-    <button type="submit" class="btn btn-primary">Lưu phiếu nhập</button>
-</form>
+<style>   
+
+    .card {
+        border-radius: 20px !important;
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: #f8fafc !important;
+        color: #6b7280;
+        font-size: 14px;
+        font-weight: 600;
+        border-bottom: none;
+    }
+
+    .table tbody td {
+        padding-top: 14px;
+        padding-bottom: 14px;
+        vertical-align: middle;
+    }
+
+    #productTable tbody tr {
+        transition: 0.15s;
+    }
+
+        #productTable tbody tr:hover {
+            background: #fafafa;
+        }
+
+    .product-picker {
+        min-width: 280px;
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    .product-search {
+        border-radius: 10px;
+        font-size: 14px;
+        max-width: 100px;
+    }
+
+    .product-select {
+        border-radius: 10px;
+    }
+
+    .money-input {
+        text-align: right;
+    }
+
+    .rowTotal {
+        color: #0d6efd;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .btn {
+        font-weight: 600;
+    }
+
+</style>
+
 <script>
+
     let index = 0;
     let currentProducts = [];
 
     function onSupplierChange() {
-        let supplierId = document.getElementById("SupplierId").value;
+
+        let supplierId =
+            document.getElementById("SupplierId").value;
 
         fetch(`/Products/GetProductsBySupplier?supplierId=${supplierId}`)
             .then(res => res.json())
             .then(data => {
+
                 currentProducts = data;
 
-                // reset table
-                document.querySelector("#productTable tbody").innerHTML = "";
-                index = 0;
+                resetTable();
             });
     }
 
-    function getProductOptions() {
-        let html = `<option value="">-- Chọn sản phẩm --</option>`;
+    function resetTable() {
 
-        currentProducts.forEach(p => {
-            html += `<option value="${p.productId}">${p.productName}</option>`;
+        document.querySelector("#productTable tbody").innerHTML = `
+            <tr id="emptyRow">
+
+                <td colspan="5" class="text-center py-5">
+
+                    <div class="text-muted">
+
+                        <div style="font-size:50px">
+                            📦
+                        </div>
+
+                        <div class="fw-semibold mt-2">
+                            Chưa có sản phẩm nào
+                        </div>
+
+                    </div>
+
+                </td>
+
+            </tr>
+        `;
+
+        index = 0;
+
+        calculateTotal();
+    }
+
+    function getProductOptions(products = currentProducts) {
+
+        let html = `
+            <option value="">
+                -- Chọn sản phẩm --
+            </option>
+        `;
+
+        products.forEach(p => {
+
+            html += `
+                <option value="${p.productId}">
+                    ${p.productName}
+                </option>
+            `;
         });
 
         return html;
     }
 
     function addRow() {
+
         if (currentProducts.length === 0) {
+
             alert("Vui lòng chọn nhà cung cấp trước");
+
             return;
+        }
+
+        let emptyRow =
+            document.getElementById("emptyRow");
+
+        if (emptyRow) {
+            emptyRow.remove();
         }
 
         let row = `
             <tr>
+
                 <td>
-                    <select name="StockImportDetails[${index}].ProductId" class="form-control">
-                        ${getProductOptions()}
-                    </select>
+
+                    <div class="product-picker">
+
+                        <input type="text"
+                               class="form-control product-search"
+                               placeholder="Tìm sp..."
+                               oninput="filterProductOptions(this)" />
+
+                        <select name="StockImportDetails[${index}].ProductId"
+                                class="form-select product-select">
+
+                            ${getProductOptions()}
+
+                        </select>
+
+                    </div>
+
                 </td>
+
                 <td>
-                    <input type="number" name="StockImportDetails[${index}].Quantity" class="form-control" 
-                        type="number"
-                        step="any"
-                        value="0" 
-                        oninput="calculateTotal()" />
+
+                    <input type="number"
+                           name="StockImportDetails[${index}].Quantity"
+                           class="form-control"
+                           value="1"
+                           min="1"
+                           step="any"
+                           oninput="calculateTotal()" />
+
                 </td>
+
                 <td>
-                    <input type="number" class="form-control"
-                        name="StockImportDetails[${index}].ImportPrice"                         
-                        value="0"
-                        oninput="calculateTotal()" />
+
+                    <input type="number"
+                           name="StockImportDetails[${index}].ImportPrice"
+                           class="form-control money-input"
+                           value="0"
+                           step="any"
+                           oninput="calculateTotal()" />
+
                 </td>
-                <td class="rowTotal">0</td>
-                <td>
-                    <button type="button" class="btn btn-danger" onclick="removeRow(this)">X</button>
+
+                <td class="rowTotal">
+
+                    0 ₫
+
                 </td>
+
+                <td class="text-center">
+
+                    <button type="button"
+                            class="btn btn-outline-danger btn-sm rounded-circle"
+                            onclick="removeRow(this)">
+
+                        ✕
+
+                    </button>
+
+                </td>
+
             </tr>
         `;
 
-        document.querySelector("#productTable tbody").insertAdjacentHTML("beforeend", row);
+        document.querySelector("#productTable tbody")
+            .insertAdjacentHTML("beforeend", row);
+
         index++;
 
         calculateTotal();
+
+        setTimeout(() => {
+
+            let searches =
+                document.querySelectorAll(".product-search");
+
+            searches[searches.length - 1].focus();
+
+        }, 50);
     }
 
     function removeRow(btn) {
+
         btn.closest("tr").remove();
+
+        let rows =
+            document.querySelectorAll("#productTable tbody tr");
+
+        if (rows.length === 0) {
+
+            resetTable();
+        }
+
         calculateTotal();
     }
 
     function calculateTotal() {
-        let total = 0;
 
-        document.querySelectorAll("#productTable tbody tr").forEach(row => {
-            let qty = parseFloat(row.querySelector("input[name*='Quantity']").value) || 0;
-            let price = parseFloat(row.querySelector("input[name*='ImportPrice']").value) || 0;
+        let total = 0;
+        let totalQty = 0;
+
+        let rows =
+            document.querySelectorAll("#productTable tbody tr");
+
+        rows.forEach(row => {
+
+            let qtyInput =
+                row.querySelector("input[name*='Quantity']");
+
+            let priceInput =
+                row.querySelector("input[name*='ImportPrice']");
+
+            if (!qtyInput || !priceInput) return;
+
+            let qty =
+                parseFloat(qtyInput.value) || 0;
+
+            let price =
+                parseFloat(priceInput.value) || 0;
 
             let rowTotal = qty * price;
-            row.querySelector(".rowTotal").innerText = formatNumber(rowTotal);
+
+            row.querySelector(".rowTotal").innerText =
+                formatMoney(rowTotal);
 
             total += rowTotal;
+            totalQty += qty;
         });
 
-        document.getElementById("totalAmount").value = total;
-        document.getElementById("debtAmount").value = total;
+        document.getElementById("displayTotal").innerText =
+            formatMoney(total);
 
+        document.getElementById("headerTotal").innerText =
+            formatMoney(total);
 
-        // let paid = parseFloat(document.getElementById("paidAmount").value) || 0;
-        // let debt = total - paid;
-        // document.getElementById("debtAmount").value = debt;
+        document.getElementById("totalAmount").value =
+            total;
+
+        document.getElementById("debtAmount").value =
+            total;
+
+        document.getElementById("totalItems").innerText =
+            rows.length;
+
+        document.getElementById("totalQty").innerText =
+            totalQty;
     }
 
     function beforeSubmit() {
-        let rows = document.querySelectorAll("#productTable tbody tr");
+
+        let rows =
+            document.querySelectorAll("#productTable tbody tr");
 
         rows.forEach((row, i) => {
-            row.querySelectorAll("select, input").forEach(input => {
-                input.name = input.name.replace(/\[\d+\]/, `[${i}]`);
-            });
+
+            row.querySelectorAll("select, input")
+                .forEach(input => {
+
+                    input.name =
+                        input.name.replace(/\[\d+\]/, `[${i}]`);
+                });
         });
     }
-    function formatNumber(n) {
-        return n.toLocaleString('vi-VN');
+
+    function formatMoney(number) {
+
+        return number.toLocaleString('vi-VN') + ' ₫';
     }
 
-    function parseNumber(str) {
-        return Number(str.replace(/\./g, '').replace(/,/g, '')) || 0;
+    function removeVietnameseTones(str) {
+
+        return str
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d")
+            .replace(/Đ/g, "D")
+            .toLowerCase();
     }
+
+    function filterProductOptions(input) {
+
+        let keyword =
+            removeVietnameseTones(input.value);
+
+        let wrapper =
+            input.closest(".product-picker");
+
+        let select =
+            wrapper.querySelector(".product-select");
+
+        let filtered = [...currentProducts];
+
+        if (keyword) {
+
+            filtered = filtered.filter(p => {
+
+                return removeVietnameseTones(p.productName)
+                    .includes(keyword);
+            });
+
+            filtered.sort((a, b) => {
+
+                let aName =
+                    removeVietnameseTones(a.productName);
+
+                let bName =
+                    removeVietnameseTones(b.productName);
+
+                let aStarts =
+                    aName.startsWith(keyword) ? 0 : 1;
+
+                let bStarts =
+                    bName.startsWith(keyword) ? 0 : 1;
+
+                return aStarts - bStarts;
+            });
+        }
+
+        select.innerHTML =
+            getProductOptions(filtered);
+    }
+
 </script>

@@ -1,49 +1,571 @@
 ﻿@model learnApp.Models.StockImport
 
-@{
-    ViewData["Title"] = "Edit";
-}
+<div class="sticky-top bg-white border-bottom z-3 shadow-sm"
+     style="
+    top:0;
+    backdrop-filter:blur(12px);
+    background:rgba(255,255,255,0.92);
+    ">
 
-<h1>Edit</h1>
+    <div class="container py-3">
 
-<h4>StockImport</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="ImportId" />
-            <div class="form-group">
-                <label asp-for="SupplierId" class="control-label"></label>
-                <select asp-for="SupplierId" class="form-control" asp-items="ViewBag.SupplierId"></select>
-                <span asp-validation-for="SupplierId" class="text-danger"></span>
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+                <h3 class="fw-bold mb-1">
+                    ✏️ Chỉnh sửa phiếu nhập
+                </h3>
+
+                <div class="text-muted small">
+                    Cập nhật thông tin phiếu nhập hàng
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="ImportDate" class="control-label"></label>
-                <input asp-for="ImportDate" class="form-control" />
-                <span asp-validation-for="ImportDate" class="text-danger"></span>
+
+            <div class="d-flex align-items-center gap-4">
+
+                <div class="text-end">
+                    <div class="small text-muted">
+                        Tổng tiền
+                    </div>
+
+                    <div class="fw-bold text-primary fs-4"
+                         id="headerTotal">
+                        0 ₫
+                    </div>
+                </div>
+
+                <button type="submit"
+                        form="stockImportForm"
+                        class="btn btn-primary rounded-pill px-4 shadow-sm">
+
+                    💾 Cập nhật
+
+                </button>
+
             </div>
-            <div class="form-group">
-                <label asp-for="EmployeeId" class="control-label"></label>
-                <select asp-for="EmployeeId" class="form-control" asp-items="ViewBag.EmployeeId"></select>
-                <span asp-validation-for="EmployeeId" class="text-danger"></span>
-            </div>
-@*             <div class="form-group">
-                <label asp-for="TotalAmount" class="control-label"></label>
-                <input asp-for="TotalAmount" class="form-control" />
-                <span asp-validation-for="TotalAmount" class="text-danger"></span>
-            </div> *@
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+
+        </div>
+
     </div>
+
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
+<div class="container py-4">
+
+    <form asp-action="Edit"
+          method="post"
+          id="stockImportForm"
+          onsubmit="beforeSubmit()">
+
+        <input type="hidden" asp-for="ImportId" />
+
+        <div class="row g-4">
+
+            <!-- LEFT -->
+            <div class="col-lg-8">
+
+                <div class="card border-0 shadow-sm mb-4">
+
+                    <div class="card-body p-4">
+
+                        <h5 class="fw-semibold mb-4">
+                            🏢 Thông tin nhập hàng
+                        </h5>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-medium">
+                                    Nhà cung cấp
+                                </label>
+
+                                <select asp-for="SupplierId"
+                                        class="form-select form-select-lg"
+                                        asp-items="ViewBag.SupplierId"
+                                        onchange="onSupplierChange()">
+
+                                    <option value="">
+                                        -- Chọn nhà cung cấp --
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-medium">
+                                    Nhân viên
+                                </label>
+
+                                <select asp-for="EmployeeId"
+                                        class="form-select form-select-lg"
+                                        asp-items="ViewBag.EmployeeId">
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- PRODUCT -->
+                <div class="card border-0 shadow-sm">
+
+                    <div class="card-body p-4">
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+
+                            <div>
+
+                                <h5 class="fw-semibold mb-1">
+                                    🛒 Danh sách sản phẩm
+                                </h5>
+
+                                <div class="small text-muted">
+                                    Chỉnh sửa sản phẩm trong phiếu nhập
+                                </div>
+
+                            </div>
+
+                            <button type="button"
+                                    class="btn btn-success rounded-pill px-4"
+                                    onclick="addRow()">
+
+                                + Thêm sản phẩm
+
+                            </button>
+
+                        </div>
+
+                        <div class="table-responsive">
+
+                            <table class="table align-middle"
+                                   id="productTable">
+
+                                <thead class="table-light">
+
+                                    <tr>
+                                        <th style="width:40%">
+                                            Sản phẩm
+                                        </th>
+
+                                        <th style="width:15%">
+                                            Số lượng
+                                        </th>
+
+                                        <th style="width:20%">
+                                            Giá nhập
+                                        </th>
+
+                                        <th style="width:20%">
+                                            Thành tiền
+                                        </th>
+
+                                        <th style="width:5%">
+                                        </th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody id="productTableBody">
+
+                                    @if (Model.StockImportDetails != null && Model.StockImportDetails.Any())
+                                    {
+                                        int i = 0;
+
+                                        foreach (var item in Model.StockImportDetails)
+                                        {
+                                            <tr>
+
+                                                <td>
+
+                                                    <div class="product-picker">
+
+                                                        <input type="text"
+                                                               class="form-control product-search"
+                                                               placeholder="Tìm sp..."
+                                                               oninput="filterProductOptions(this)" />
+
+                                                        <select name="StockImportDetails[@i].ProductId"
+                                                                class="form-select product-select">
+
+                                                            @foreach (var p in ViewBag.Products)
+                                                            {
+                                                                if (p.ProductId == item.ProductId)
+                                                                {
+                                                                    <option selected value="@p.ProductId">
+                                                                        @p.ProductName
+                                                                    </option>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <option value="@p.ProductId">
+                                                                        @p.ProductName
+                                                                    </option>
+                                                                }
+                                                            }
+
+                                                        </select>
+
+                                                    </div>
+
+                                                </td>
+
+                                                <td>
+
+                                                    <input type="number"
+                                                           name="StockImportDetails[@i].Quantity"
+                                                           class="form-control"
+                                                           value="@item.Quantity"
+                                                           min="1"
+                                                           step="any"
+                                                           oninput="calculateTotal()" />
+
+                                                </td>
+
+                                                <td>
+
+                                                    <input type="number"
+                                                           name="StockImportDetails[@i].ImportPrice"
+                                                           class="form-control money-input"
+                                                           value="@item.ImportPrice"
+                                                           step="any"
+                                                           oninput="calculateTotal()" />
+
+                                                </td>
+
+                                                <td class="rowTotal">
+                                                    0 ₫
+                                                </td>
+
+                                                <td class="text-center">
+
+                                                    <button type="button"
+                                                            class="btn btn-outline-danger btn-sm rounded-circle"
+                                                            onclick="removeRow(this)">
+
+                                                        ✕
+
+                                                    </button>
+
+                                                </td>
+
+                                            </tr>
+
+                                            i++;
+                                        }
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-lg-4">
+
+                <div class="card border-0 shadow-sm sticky-top"
+                     style="top:90px">
+
+                    <div class="card-body p-4">
+
+                        <h5 class="fw-semibold mb-4">
+                            💰 Tổng kết
+                        </h5>
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span class="text-muted">
+                                Tổng sản phẩm
+                            </span>
+
+                            <span class="fw-semibold"
+                                  id="totalItems">
+                                0
+                            </span>
+
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span class="text-muted">
+                                Tổng số lượng
+                            </span>
+
+                            <span class="fw-semibold"
+                                  id="totalQty">
+                                0
+                            </span>
+
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <span class="fw-semibold fs-5">
+                                Tổng tiền
+                            </span>
+
+                            <span class="fw-bold text-primary fs-3"
+                                  id="displayTotal">
+                                0 ₫
+                            </span>
+
+                        </div>
+
+                        <input asp-for="TotalAmount"
+                               id="totalAmount"
+                               type="hidden" />
+
+                        <input asp-for="PaidAmount"
+                               id="paidAmount"
+                               type="hidden" />
+
+                        <input asp-for="DebtAmount"
+                               id="debtAmount"
+                               type="hidden" />
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
 </div>
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+<partial name="_ValidationScriptsPartial" />
+
+<script>
+
+    let currentProducts = @Html.Raw(Json.Serialize(ViewBag.Products));
+    let index = @Model.StockImportDetails.Count;
+
+    function getProductOptions(products = currentProducts) {
+
+        let html = `
+            <option value="">
+                -- Chọn sản phẩm --
+            </option>
+        `;
+
+        products.forEach(p => {
+
+            html += `
+                <option value="${p.productId}">
+                    ${p.productName}
+                </option>
+            `;
+        });
+
+        return html;
+    }
+
+    function addRow() {
+
+        let row = `
+            <tr>
+
+                <td>
+
+                    <div class="product-picker">
+
+                        <input type="text"
+                               class="form-control product-search"
+                               placeholder="Tìm sp..."
+                               oninput="filterProductOptions(this)" />
+
+                        <select name="StockImportDetails[${index}].ProductId"
+                                class="form-select product-select">
+
+                            ${getProductOptions()}
+
+                        </select>
+
+                    </div>
+
+                </td>
+
+                <td>
+
+                    <input type="number"
+                           name="StockImportDetails[${index}].Quantity"
+                           class="form-control"
+                           value="1"
+                           min="1"
+                           step="any"
+                           oninput="calculateTotal()" />
+
+                </td>
+
+                <td>
+
+                    <input type="number"
+                           name="StockImportDetails[${index}].ImportPrice"
+                           class="form-control money-input"
+                           value="0"
+                           step="any"
+                           oninput="calculateTotal()" />
+
+                </td>
+
+                <td class="rowTotal">
+                    0 ₫
+                </td>
+
+                <td class="text-center">
+
+                    <button type="button"
+                            class="btn btn-outline-danger btn-sm rounded-circle"
+                            onclick="removeRow(this)">
+
+                        ✕
+
+                    </button>
+
+                </td>
+
+            </tr>
+        `;
+
+        document.querySelector("#productTable tbody")
+            .insertAdjacentHTML("beforeend", row);
+
+        index++;
+
+        calculateTotal();
+    }
+
+    function removeRow(btn) {
+
+        btn.closest("tr").remove();
+
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+
+        let total = 0;
+        let totalQty = 0;
+
+        let rows =
+            document.querySelectorAll("#productTable tbody tr");
+
+        rows.forEach(row => {
+
+            let qty =
+                parseFloat(
+                    row.querySelector("input[name*='Quantity']").value
+                ) || 0;
+
+            let price =
+                parseFloat(
+                    row.querySelector("input[name*='ImportPrice']").value
+                ) || 0;
+
+            let rowTotal = qty * price;
+
+            row.querySelector(".rowTotal").innerText =
+                formatMoney(rowTotal);
+
+            total += rowTotal;
+            totalQty += qty;
+        });
+
+        document.getElementById("displayTotal").innerText =
+            formatMoney(total);
+
+        document.getElementById("headerTotal").innerText =
+            formatMoney(total);
+
+        document.getElementById("totalAmount").value =
+            total;
+
+        document.getElementById("debtAmount").value =
+            total;
+
+        document.getElementById("totalItems").innerText =
+            rows.length;
+
+        document.getElementById("totalQty").innerText =
+            totalQty;
+    }
+
+    function beforeSubmit() {
+
+        let rows =
+            document.querySelectorAll("#productTable tbody tr");
+
+        rows.forEach((row, i) => {
+
+            row.querySelectorAll("select, input")
+                .forEach(input => {
+
+                    if (input.name) {
+
+                        input.name =
+                            input.name.replace(/\[\d+\]/, `[${i}]`);
+                    }
+                });
+        });
+    }
+
+    function formatMoney(number) {
+
+        return number.toLocaleString('vi-VN') + ' ₫';
+    }
+
+    function removeVietnameseTones(str) {
+
+        return str
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d")
+            .replace(/Đ/g, "D")
+            .toLowerCase();
+    }
+
+    function filterProductOptions(input) {
+
+        let keyword =
+            removeVietnameseTones(input.value);
+
+        let wrapper =
+            input.closest(".product-picker");
+
+        let select =
+            wrapper.querySelector(".product-select");
+
+        let filtered = [...currentProducts];
+
+        if (keyword) {
+
+            filtered = filtered.filter(p => {
+
+                return removeVietnameseTones(p.productName)
+                    .includes(keyword);
+            });
+        }
+
+        select.innerHTML =
+            getProductOptions(filtered);
+    }
+
+    calculateTotal();
+
+</script>
