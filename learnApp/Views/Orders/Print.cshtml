@@ -65,7 +65,16 @@
     @foreach (var item in Model.OrderDetails)
     {
         <tr>
-            <td>@item.Product.ProductName</td>
+            <td>
+                @if(item.IsSteelProcessing)
+                {
+                    <span>@item.Note</span>
+                }
+                else
+                {
+                    <span>@item.Product.ProductName</span>
+                }
+            </td>
             <td>@item.Quantity</td>
             <td>@CurrencyHelper.ToVnd(item.UnitPrice)</td>
             <td>@CurrencyHelper.ToVnd(item.Quantity * item.UnitPrice)</td>

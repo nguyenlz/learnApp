@@ -19,22 +19,27 @@ namespace learnApp.Controllers
         }
 
         // GET: OrderDetails
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchbarinput)
         {
-            var vlxdContext = _context.OrderDetails.Include(o => o.Order).Include(o => o.Product);
-            return View(await vlxdContext.ToListAsync());
+            var details = _context.OrderDetails.Include(o => o.Order).Include(o => o.Product).AsQueryable();
+            if(!string.IsNullOrEmpty(searchbarinput))
+            {
+                details = details.Where(od => od.Product.ProductName.Contains(searchbarinput));
+            }
+
+            return View(await details.ToListAsync());
         }
 
         // GET: OrderDetails/Details/5
-        public async Task<IActionResult> Details(int? orderId, int? productId)
+        public async Task<IActionResult> Details(int? id)
         {
-            if (orderId == null || productId == null)
+            if (id == null)
                 return NotFound();
 
             var orderDetail = await _context.OrderDetails
                 .Include(o => o.Order)
                 .Include(o => o.Product)
-                .FirstOrDefaultAsync(m => m.OrderId == orderId && m.ProductId == productId);
+                .FirstOrDefaultAsync(m => m.OrderDetailId == id);
 
             if (orderDetail == null)
                 return NotFound();
@@ -55,54 +60,40 @@ namespace learnApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("OrderId,ProductId,Quantity,UnitPrice")] OrderDetail orderDetail)
+        public async Task<IActionResult> Create([Bind("OrderId,ProductId,Quantity,UnitPrice,Note,IsSteelProcessing")] OrderDetail orderDetail)
         {
-            Console.WriteLine("POST CREATE HIT");
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                Console.WriteLine("MODEL INVALID");
-                try
-                {
-                    _context.Add(orderDetail);
-                    await _context.SaveChangesAsync();
-
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (DbUpdateException)
-                {
-                    // Lỗi phổ biến: trùng khóa chính (OrderId + ProductId)
-                    ModelState.AddModelError("", "Sản phẩm này đã tồn tại trong đơn hàng. Vui lòng chọn sản phẩm khác hoặc chỉnh sửa số lượng.");
-                }
-                catch (Exception ex)
-                {
-                    ModelState.AddModelError("", "Có lỗi xảy ra: " + ex.Message);
-                }
-            }
-            else
-            {
-                // Debug nếu cần
-                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
-                {
-                    Console.WriteLine(error.ErrorMessage);
-                }
+                LoadViewData(orderDetail);
+                return View(orderDetail);
             }
 
-            // load lại dropdown khi lỗi
-            ViewData["OrderId"] = new SelectList(_context.Orders, "OrderId", "OrderId", orderDetail.OrderId);
-            ViewData["ProductId"] = new SelectList(_context.Products, "ProductId", "ProductId", orderDetail.ProductId);
+            try
+            {
+                _context.OrderDetails.Add(orderDetail);
 
-            return View(orderDetail);
+                await _context.SaveChangesAsync();
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+
+                LoadViewData(orderDetail);
+
+                return View(orderDetail);
+            }
         }
 
         // GET: OrderDetails/Edit/5
-        public async Task<IActionResult> Edit(int? orderId, int? productId)
+        public async Task<IActionResult> Edit(int? id)
         {
-            if (orderId == null || productId == null)
+            if (id == null)
                 return NotFound();
 
             var orderDetail = await _context.OrderDetails
-                .FindAsync(orderId, productId);
-
+                .FindAsync(id);
             if (orderDetail == null)
                 return NotFound();
 
@@ -117,9 +108,9 @@ namespace learnApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int orderId, int productId, [Bind("OrderId,ProductId,Quantity,UnitPrice")] OrderDetail orderDetail)
+        public async Task<IActionResult> Edit(int id, [Bind("OrderId,ProductId,Quantity,UnitPrice,Note,IsSteelProcessing")] OrderDetail orderDetail)
         {
-            if (orderId != orderDetail.OrderId || productId != orderDetail.ProductId)
+            if (id != orderDetail.OrderDetailId)
                 return NotFound();
 
             if (ModelState.IsValid)
@@ -131,7 +122,7 @@ namespace learnApp.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!OrderDetailExists(orderDetail.OrderId, orderDetail.ProductId))
+                    if (!OrderDetailExists(orderDetail.OrderDetailId))
                         return NotFound();
                     else
                         throw;
@@ -145,15 +136,15 @@ namespace learnApp.Controllers
         }
 
         // GET: OrderDetails/Delete/5
-        public async Task<IActionResult> Delete(int? orderId, int? productId)
+        public async Task<IActionResult> Delete(int? id)
         {
-            if (orderId == null || productId == null)
+            if (id == null)
                 return NotFound();
 
             var orderDetail = await _context.OrderDetails
                 .Include(o => o.Order)
                 .Include(o => o.Product)
-                .FirstOrDefaultAsync(m => m.OrderId == orderId && m.ProductId == productId);
+                .FirstOrDefaultAsync(m => m.OrderDetailId == id);
 
             if (orderDetail == null)
                 return NotFound();
@@ -164,9 +155,9 @@ namespace learnApp.Controllers
         // POST: OrderDetails/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int orderId, int productId)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var orderDetail = await _context.OrderDetails.FindAsync(orderId, productId);
+            var orderDetail = await _context.OrderDetails.FindAsync(id);
 
             if (orderDetail != null)
             {
@@ -177,9 +168,23 @@ namespace learnApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private bool OrderDetailExists(int orderId, int productId)
+        private bool OrderDetailExists(int id)
         {
-            return _context.OrderDetails.Any(e => e.OrderId == orderId && e.ProductId == productId);
+            return _context.OrderDetails.Any(e => e.OrderDetailId == id);
+        }
+        private void LoadViewData(OrderDetail? orderDetail = null)
+        {
+            ViewData["OrderId"] = new SelectList(
+                _context.Orders,
+                "OrderId",
+                "OrderId",
+                orderDetail?.OrderId);
+
+            ViewData["ProductId"] = new SelectList(
+                _context.Products,
+                "ProductId",
+                "ProductName",
+                orderDetail?.ProductId);
         }
     }
 }

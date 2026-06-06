@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using learnApp.Models;
 
@@ -11,9 +12,11 @@ using learnApp.Models;
 namespace learnApp.Migrations
 {
     [DbContext(typeof(VlxdContext))]
-    partial class VlxdContextModelSnapshot : ModelSnapshot
+    [Migration("20260527074432_UpdateOrderDetail")]
+    partial class UpdateOrderDetail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -367,29 +370,22 @@ namespace learnApp.Migrations
 
             modelBuilder.Entity("learnApp.Models.StockImportDetail", b =>
                 {
-                    b.Property<int>("ImportDetailId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ImportDetailId"));
-
                     b.Property<int>("ImportId")
                         .HasColumnType("int")
                         .HasColumnName("ImportID");
-
-                    b.Property<decimal?>("ImportPrice")
-                        .HasColumnType("decimal(12, 2)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int")
                         .HasColumnName("ProductID");
 
+                    b.Property<decimal?>("ImportPrice")
+                        .HasColumnType("decimal(12, 2)");
+
                     b.Property<decimal?>("Quantity")
                         .HasColumnType("decimal(12, 2)");
 
-                    b.HasKey("ImportDetailId");
-
-                    b.HasIndex("ImportId");
+                    b.HasKey("ImportId", "ProductId")
+                        .HasName("PK__StockImp__4DD7ABE466E9BCBD");
 
                     b.HasIndex("ProductId");
 

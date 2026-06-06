@@ -10,24 +10,13 @@
     Chỉnh sửa đơn hàng
 </h2>
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show">
-        @TempData["Error"]
-
-        <button type="button"
-                class="btn-close"
-                data-bs-dismiss="alert">
-        </button>
-    </div>
-}
-
 <form asp-action="Edit" onsubmit="beforeSubmit()">
 
     <input type="hidden" asp-for="Order.OrderId" />
 
     <!-- THÔNG TIN ĐƠN -->
     <div class="card shadow-sm border-0 mb-4">
+
         <div class="card-body">
 
             <h5 class="card-section-title">
@@ -37,6 +26,7 @@
             <div class="row g-3">
 
                 <div class="col-md-3">
+
                     <label class="form-label-custom">
                         Khách hàng
                     </label>
@@ -45,11 +35,17 @@
                             class="form-select"
                             asp-items="ViewBag.CustomerId"
                             onchange="loadSites(this)">
-                        <option value="">-- Chọn khách hàng --</option>
+
+                        <option value="">
+                            -- Chọn khách hàng --
+                        </option>
+
                     </select>
+
                 </div>
 
                 <div class="col-md-3">
+
                     <label class="form-label-custom">
                         Nhân viên
                     </label>
@@ -58,20 +54,28 @@
                             class="form-select"
                             asp-items="ViewBag.EmployeeId">
                     </select>
+
                 </div>
 
                 <div class="col-md-3">
+
                     <label class="form-label-custom">
                         Công trình
                     </label>
 
                     <select asp-for="Order.SiteId"
                             class="form-select">
-                        <option value="">-- Chọn công trình --</option>
+
+                        <option value="">
+                            -- Chọn công trình --
+                        </option>
+
                     </select>
+
                 </div>
 
                 <div class="col-md-3">
+
                     <label class="form-label-custom">
                         Ngày tạo đơn
                     </label>
@@ -79,11 +83,13 @@
                     <input asp-for="Order.OrderDate"
                            type="datetime-local"
                            class="form-control" />
+
                 </div>
 
             </div>
 
         </div>
+
     </div>
 
     <!-- DANH SÁCH SP -->
@@ -100,8 +106,10 @@
                 <button type="button"
                         class="btn btn-success"
                         onclick="addRow()">
+
                     <i class="bi bi-plus-circle"></i>
                     Thêm sản phẩm
+
                 </button>
 
             </div>
@@ -112,9 +120,10 @@
                        id="orderDetailsTable">
 
                     <thead class="table-light">
+
                         <tr>
 
-                            <th style="min-width:420px;">
+                            <th style="min-width:320px;">
                                 Sản phẩm
                             </th>
 
@@ -123,9 +132,18 @@
                                 Số lượng
                             </th>
 
-                            <th style="width:180px;"
+                            <th style="width:170px;"
                                 class="text-end">
                                 Đơn giá
+                            </th>
+
+                            <th style="width:120px;"
+                                class="text-center">
+                                Làm đai
+                            </th>
+
+                            <th style="min-width:250px;">
+                                Ghi chú
                             </th>
 
                             <th style="width:180px;"
@@ -136,6 +154,7 @@
                             <th style="width:70px;"></th>
 
                         </tr>
+
                     </thead>
 
                     <tbody>
@@ -146,22 +165,22 @@
 
                         @foreach (var item in Model.OrderDetails)
                         {
-                            var thanhTien = item.Quantity * item.UnitPrice;
+                            var total = item.Quantity * item.UnitPrice;
 
                             <tr>
 
-                                <td style="min-width:420px;">
+                                <td>
 
                                     <div class="d-flex gap-2">
 
                                         <input type="text"
                                                class="form-control product-search"
                                                placeholder="Tìm..."
-                                               style="max-width:150px;"
+                                               style="max-width:140px;"
                                                onkeyup="filterProducts(this)" />
 
                                         <select name="OrderDetails[@i].ProductId"
-                                                class="form-select"
+                                                class="form-select product-select"
                                                 onchange="loadPrice(this)">
 
                                             @Html.Raw(ViewBag.ProductOptions)
@@ -173,15 +192,19 @@
                                 </td>
 
                                 <td>
+
                                     <input name="OrderDetails[@i].Quantity"
                                            type="number"
-                                           step="any"
+                                           step="0.01"
+                                           min="0"
                                            class="form-control text-end"
                                            value="@item.Quantity"
                                            onchange="calculate(this)" />
+
                                 </td>
 
                                 <td>
+
                                     <input name="OrderDetails[@i].UnitPrice"
                                            type="text"
                                            class="form-control text-end"
@@ -189,10 +212,38 @@
                                            onfocus="unformatPrice(this)"
                                            onblur="formatPrice(this)"
                                            onchange="calculate(this)" />
+
+                                </td>
+
+                                <td class="text-center">
+
+                                    <input type="hidden"
+                                           name="OrderDetails[@i].IsSteelProcessing"
+                                           value="false" />
+
+                                    <div class="form-check d-flex justify-content-center">
+
+                                        <input type="checkbox"
+                                               class="form-check-input processing-check"
+                                               name="OrderDetails[@i].IsSteelProcessing"
+                                               value="true"
+                                        @(item.IsSteelProcessing ? "checked" : "") />
+
+                                    </div>
+
+                                </td>
+
+                                <td>
+
+                                    <textarea name="OrderDetails[@i].Note"
+                                              class="form-control"
+                                              rows="2"
+                                              placeholder="Ví dụ: Đai 15x15 - 300 cái">@item.Note</textarea>
+
                                 </td>
 
                                 <td class="total text-end fw-semibold">
-                                    @CurrencyHelper.ToVnd(thanhTien)
+                                    @CurrencyHelper.ToVnd(total)
                                 </td>
 
                                 <td class="text-center">
@@ -200,7 +251,9 @@
                                     <button type="button"
                                             class="btn btn-outline-danger btn-sm"
                                             onclick="removeRow(this)">
+
                                         <i class="bi bi-trash"></i>
+
                                     </button>
 
                                 </td>
@@ -216,7 +269,7 @@
 
             </div>
 
-            <!-- SUMMARY -->
+            <!-- TỔNG -->
             <div class="row justify-content-end mt-4">
 
                 <div class="col-md-4">
@@ -250,6 +303,14 @@
 
     </div>
 
+    <!-- ERROR -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" asp-validation-summary="All">
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
     <!-- ACTION -->
     <div class="sticky-bottom bg-white border-top p-3 mt-4 shadow-sm">
 
@@ -257,13 +318,17 @@
 
             <a asp-action="Index"
                    class="btn btn-outline-secondary">
+
                 Quay lại
+
             </a>
 
             <button type="submit"
                     class="btn btn-primary">
+
                 <i class="bi bi-floppy"></i>
                 Lưu thay đổi
+
             </button>
 
         </div>
@@ -289,25 +354,37 @@
 
         function addRow() {
 
-            let currentIndex = index;
+            let row = buildRow(index);
 
-            let row = `
+            document.querySelector("#orderDetailsTable tbody")
+                .insertAdjacentHTML('beforeend', row);
+
+            index++;
+
+            calculateGrandTotal();
+        }
+
+        function buildRow(i) {
+
+            return `
             <tr>
 
-                <td style="min-width:420px;">
+                <td>
 
                     <div class="d-flex gap-2">
 
                         <input type="text"
                                class="form-control product-search"
                                placeholder="Tìm..."
-                               style="max-width:150px;"
+                               style="max-width:140px;"
                                onkeyup="filterProducts(this)" />
 
-                        <select name="OrderDetails[${currentIndex}].ProductId"
-                                class="form-select"
+                        <select name="OrderDetails[${i}].ProductId"
+                                class="form-select product-select"
                                 onchange="loadPrice(this)">
+
                             ${getProductOptions()}
+
                         </select>
 
                     </div>
@@ -315,22 +392,54 @@
                 </td>
 
                 <td>
-                    <input name="OrderDetails[${currentIndex}].Quantity"
+
+                    <input name="OrderDetails[${i}].Quantity"
                            type="number"
-                           step="any"
+                           step="0.01"
+                           min="0"
                            class="form-control text-end"
                            value="1"
                            onchange="calculate(this)" />
+
                 </td>
 
                 <td>
-                    <input name="OrderDetails[${currentIndex}].UnitPrice"
+
+                    <input name="OrderDetails[${i}].UnitPrice"
                            type="text"
                            class="form-control text-end"
                            value="0"
                            onfocus="unformatPrice(this)"
                            onblur="formatPrice(this)"
                            onchange="calculate(this)" />
+
+                </td>
+
+                <td class="text-center">
+
+                    <input type="hidden"
+                           name="OrderDetails[${i}].IsSteelProcessing"
+                           value="false" />
+
+                    <div class="form-check d-flex justify-content-center">
+
+                        <input type="checkbox"
+                               class="form-check-input processing-check"
+                               name="OrderDetails[${i}].IsSteelProcessing"
+                               value="true">
+
+                    </div>
+
+                </td>
+
+                <td>
+
+                    <textarea
+                        name="OrderDetails[${i}].Note"
+                        class="form-control"
+                        rows="2"
+                        placeholder="Ví dụ: Đai 15x15 - 300 cái"></textarea>
+
                 </td>
 
                 <td class="total text-end fw-semibold">
@@ -342,20 +451,15 @@
                     <button type="button"
                             class="btn btn-outline-danger btn-sm"
                             onclick="removeRow(this)">
+
                         <i class="bi bi-trash"></i>
+
                     </button>
 
                 </td>
 
             </tr>
             `;
-
-            document.querySelector("#orderDetailsTable tbody")
-                .insertAdjacentHTML('beforeend', row);
-
-            index++;
-
-            calculateGrandTotal();
         }
 
         function removeRow(btn) {
@@ -408,19 +512,44 @@
 
             let row = select.closest('tr');
 
-            let price = parseInt(
-                select.options[select.selectedIndex]
-                    .getAttribute("data-price")
+            let option = select.options[
+                select.selectedIndex
+            ];
+
+            let basePrice = parseInt(
+                option.getAttribute("data-price")
             ) || 0;
 
-            let input = row.querySelector('[name*="UnitPrice"]');
+            let isProcessing = row.querySelector(
+                '.processing-check'
+            ).checked;
 
-            input.value = price;
+            let finalPrice = isProcessing
+                ? basePrice + 2500
+                : basePrice;
+
+            let input = row.querySelector(
+                '[name*="UnitPrice"]'
+            );
+
+            input.value = finalPrice;
 
             formatPrice(input);
 
             calculate(input);
         }
+
+        document.addEventListener('change', function (e) {
+
+            if (e.target.classList.contains('processing-check')) {
+
+                let row = e.target.closest('tr');
+
+                let select = row.querySelector('.product-select');
+
+                loadPrice(select);
+            }
+        });
 
         function formatPrice(input) {
 
@@ -428,22 +557,51 @@
                 input.value.replace(/\./g, '')
             ) || 0;
 
-            input.value = value.toLocaleString('vi-VN');
+            input.value =
+                value.toLocaleString('vi-VN');
         }
 
         function unformatPrice(input) {
 
-            input.value = input.value.replace(/\./g, '');
+            input.value =
+                input.value.replace(/\./g, '');
         }
 
         function beforeSubmit() {
 
-            document.querySelectorAll('[name*="UnitPrice"]')
-                .forEach(input => {
+            document.querySelectorAll(
+                '[name*="UnitPrice"]'
+            ).forEach(input => {
 
-                    input.value =
-                        input.value.replace(/\./g, '');
-                });
+                input.value =
+                    input.value.replace(/\./g, '');
+            });
+
+            document.querySelectorAll(
+                '[name*="Quantity"]'
+            ).forEach(input => {
+
+                input.value =
+                    input.value.replace(',', '.');
+            });
+
+            // re-index tránh lỗi binder
+
+            let rows = document.querySelectorAll(
+                '#orderDetailsTable tbody tr'
+            );
+
+            rows.forEach((row, i) => {
+
+                row.querySelectorAll('[name]')
+                    .forEach(input => {
+
+                        input.name = input.name.replace(
+                            /OrderDetails\[\d+\]/,
+                            `OrderDetails[${i}]`
+                        );
+                    });
+            });
         }
 
         function getProductOptions() {
@@ -463,15 +621,19 @@
 
         function filterProducts(input) {
 
-            let keyword = removeVietnameseTones(input.value);
+            let keyword =
+                removeVietnameseTones(input.value);
 
-            let select = input.parentElement.querySelector('select');
+            let select =
+                input.parentElement.querySelector('select');
 
             for (let option of select.options) {
 
-                let text = removeVietnameseTones(option.text);
+                let text =
+                    removeVietnameseTones(option.text);
 
-                option.hidden = !text.includes(keyword);
+                option.hidden =
+                    !text.includes(keyword);
             }
         }
 
@@ -491,7 +653,8 @@
 
                     data.forEach(site => {
 
-                        let option = document.createElement("option");
+                        let option =
+                            document.createElement("option");
 
                         option.value = site.siteId;
                         option.textContent = site.name;
@@ -503,10 +666,8 @@
 
         function loadInitialSites() {
 
-            let customerSelect =
-                document.querySelector('[name="Order.CustomerId"]');
-
-            let customerId = customerSelect.value;
+            let customerId =
+                document.querySelector('[name="Order.CustomerId"]').value;
 
             if (!customerId) return;
 
@@ -517,14 +678,16 @@
                     let siteSelect =
                         document.querySelector('[name="Order.SiteId"]');
 
-                    let selectedSiteId = '@Model.Order.SiteId';
+                    let selectedSiteId =
+                        '@Model.Order.SiteId';
 
                     siteSelect.innerHTML =
                         '<option value="">-- Chọn công trình --</option>';
 
                     data.forEach(site => {
 
-                        let option = document.createElement("option");
+                        let option =
+                            document.createElement("option");
 
                         option.value = site.siteId;
                         option.textContent = site.name;
@@ -540,17 +703,20 @@
 
         function initSelectedProducts() {
 
-            let rows = document.querySelectorAll("#orderDetailsTable tbody tr");
+            let productIds =
+                '@string.Join(",", Model.OrderDetails.Select(x => x.ProductId))'
+                    .split(',');
+
+            let rows = document.querySelectorAll(
+                '#orderDetailsTable tbody tr'
+            );
 
             rows.forEach((row, i) => {
 
-                let productId =
-                    '@string.Join(",", Model.OrderDetails.Select(x => x.ProductId))'
-                        .split(',')[i];
+                let select =
+                    row.querySelector('.product-select');
 
-                let select = row.querySelector('select');
-
-                select.value = productId;
+                select.value = productIds[i];
             });
         }
 
@@ -571,21 +737,21 @@
         color: #0f172a;
     }
 
-    #orderDetailsTable {
-        table-layout: fixed;
+    .table th,
+    .table td {
+        vertical-align: middle;
     }
 
-        #orderDetailsTable th,
-        #orderDetailsTable td {
-            vertical-align: middle;
-        }
+    .product-search {
+        min-width: 140px;
+    }
 
     .total {
         white-space: nowrap;
     }
 
-    .product-search {
-        min-width: 140px;
+    textarea {
+        resize: vertical;
     }
 
 </style>

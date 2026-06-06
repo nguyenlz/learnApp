@@ -155,11 +155,15 @@ namespace learnApp.Controllers
         }
         public async Task<IActionResult> Summary(int SupplierId)
         {
+            var startDate = new DateTime(DateTime.Now.Year, 1, 1);
+            var endDate = startDate.AddYears(1);
+
             var imports = _context.StockImports
                 .Where(x => x.SupplierId == SupplierId)
+                //.Where(x => x.ImportDate >= startDate && x.ImportDate < endDate)
                 .Include(x => x.Supplier)
                 .Include(x => x.StockImportDetails)
-                    .ThenInclude(d => d.Product)
+                    .ThenInclude(d => d.Product)                
                 .OrderByDescending(x => x.ImportDate)
                 .ToList();
 

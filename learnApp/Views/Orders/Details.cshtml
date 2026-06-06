@@ -35,9 +35,10 @@
                 In hóa đơn
             </a>
 
-            <a asp-controller="Payments"
+            <a asp-controller="CustomerPayments"
                    asp-action="Create"
-                   asp-route-orderId="@Model.OrderId"
+                   asp-route-customerId="@(Model.CustomerId > 0 ? Model.CustomerId : null)"
+                   asp-route-siteId="@(Model.SiteId > 0 ? Model.SiteId : null)"
                    class="btn btn-warning text-white">
                 <i class="bi bi-cash-coin"></i>
                 Thanh toán
@@ -96,7 +97,15 @@
                         <div class="col-md-6">
                             <label class="text-muted small">Khách hàng</label>
                             <div class="fw-semibold">
-                                @Model.Customer?.CustomerName
+                                @if (Model.SiteId > 0)
+                                {
+                                    <text>@Model.Customer?.CustomerName - @Model.Site?.Name</text>
+                                }
+                                else
+                                {
+                                    @Model.Customer?.CustomerName
+                                }
+                                @* @Model.Customer?.CustomerName - @Model.Site?.Name *@
                             </div>
                         </div>
 
@@ -130,6 +139,7 @@
                                     <th class="text-center">Số lượng</th>
                                     <th class="text-end">Đơn giá</th>
                                     <th class="text-end">Thành tiền</th>
+                                    <th class="text-center">Ghi chú</th>
                                 </tr>
                             </thead>
 
@@ -164,6 +174,10 @@
 
                                         <td class="text-end fw-semibold">
                                             @CurrencyHelper.ToVnd(thanhTien)
+                                        </td>
+
+                                        <td class="text-center">
+                                            @item.Note
                                         </td>
                                     </tr>
                                 }

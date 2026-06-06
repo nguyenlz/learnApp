@@ -97,15 +97,20 @@ namespace learnApp.Services
             // KHÁCH NỢ
             // =========================
 
-            vm.CustomerDebts = await _context.Orders
-                .Where(x => x.PaymentStatus != PaymentStatus.Paid)
+            vm.CustomerDebts = await _context.Orders                
+                .GroupBy(x => new {
+                    x.CustomerId,
+                    x.Customer.CustomerName,
+                    SiteName = x.Site != null ? x.Site.Name : null
+                })
                 .Select(x => new CustomerDebtItem
                 {
-                    CustomerId = x.CustomerId,
-                    CustomerName = x.Customer.CustomerName,
-                    SiteName = x.Site != null ? x.Site.Name : null,
-                    DebtAmount = x.TotalAmount - x.PaidAmount
+                    CustomerId = x.Key.CustomerId,
+                    CustomerName = x.Key.CustomerName,
+                    SiteName = x.Key.SiteName,
+                    DebtAmount = x.Sum(o => o.TotalAmount - o.PaidAmount)
                 })
+                .Where(x => x.DebtAmount > 0)
                 .OrderByDescending(x => x.DebtAmount)
                 .Take(10)
                 .ToListAsync();
@@ -115,13 +120,18 @@ namespace learnApp.Services
             // =========================
 
             vm.SupplierDebts = await _context.StockImports
-                .Where(x => x.DebtAmount > 0)
-                .Select(x => new SupplierDebtItem
+                .GroupBy(x => new
                 {
-                    SupplierId = x.SupplierId,
-                    SupplierName = x.Supplier.SupplierName,
-                    DebtAmount = x.DebtAmount
+                    x.SupplierId,
+                    x.Supplier.SupplierName
                 })
+                .Select(g => new SupplierDebtItem
+                {
+                    SupplierId = g.Key.SupplierId,
+                    SupplierName = g.Key.SupplierName,
+                    DebtAmount = g.Sum(x => x.DebtAmount)
+                })
+                .Where(x => x.DebtAmount > 0)
                 .OrderByDescending(x => x.DebtAmount)
                 .Take(10)
                 .ToListAsync();

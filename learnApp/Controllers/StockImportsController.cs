@@ -97,15 +97,15 @@ namespace learnApp.Controllers
             }
             if (ModelState.IsValid)
             {
-                stockImport.StockImportDetails = stockImport.StockImportDetails
-                    .GroupBy(d => d.ProductId)
-                    .Select(g => new StockImportDetail
-                    {
-                        ProductId = g.Key,
-                        Quantity = g.Sum(x => x.Quantity ?? 0),
-                        ImportPrice = g.Last().ImportPrice
-                    })
-                    .ToList();
+                //stockImport.StockImportDetails = stockImport.StockImportDetails
+                //    .GroupBy(d => d.ProductId)
+                //    .Select(g => new StockImportDetail
+                //    {
+                //        ProductId = g.Key,
+                //        Quantity = g.Sum(x => x.Quantity ?? 0),
+                //        ImportPrice = g.Last().ImportPrice
+                //    })
+                //    .ToList();
 
                 decimal total = 0;
                 foreach (var detail in stockImport.StockImportDetails)
@@ -130,7 +130,7 @@ namespace learnApp.Controllers
                 _context.Add(stockImport);
 
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Details), new { id = stockImport.ImportId });
             }
 
             LoadViewData();
@@ -198,15 +198,15 @@ namespace learnApp.Controllers
                     .RemoveRange(oldImport.StockImportDetails);
 
                 // gộp sản phẩm trùng
-                stockImport.StockImportDetails = stockImport.StockImportDetails
-                    .GroupBy(x => x.ProductId)
-                    .Select(g => new StockImportDetail
-                    {
-                        ProductId = g.Key,
-                        Quantity = g.Sum(x => x.Quantity ?? 0),
-                        ImportPrice = g.Last().ImportPrice
-                    })
-                    .ToList();
+                //stockImport.StockImportDetails = stockImport.StockImportDetails
+                //    .GroupBy(x => x.ProductId)
+                //    .Select(g => new StockImportDetail
+                //    {
+                //        ProductId = g.Key,
+                //        Quantity = g.Sum(x => x.Quantity ?? 0),
+                //        ImportPrice = g.Last().ImportPrice
+                //    })
+                //    .ToList();
 
                 decimal total = 0;
 

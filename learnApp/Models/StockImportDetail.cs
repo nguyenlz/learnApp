@@ -7,6 +7,7 @@ namespace learnApp.Models;
 
 public partial class StockImportDetail
 {
+    public int ImportDetailId { get; set; }   // khóa chính mới
     public int ImportId { get; set; }
 
     public int ProductId { get; set; }

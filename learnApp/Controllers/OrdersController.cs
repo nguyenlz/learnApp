@@ -79,6 +79,7 @@ namespace learnApp.Controllers
             var order = await _context.Orders
                 .Include(o => o.Customer)
                 .Include(o => o.Employee)
+                .Include(o => o.Site)
                 .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
                 .FirstOrDefaultAsync(m => m.OrderId == id);
             if (order == null)
@@ -122,11 +123,116 @@ namespace learnApp.Controllers
         {
             if (!ModelState.IsValid)
             {
+                if(model.Order.CustomerId <= 0)
+                {
+                    ModelState.AddModelError("Order.CustomerId", "Vui lòng chọn khách hàng.");
+                }
+
                 LoadViewData();
                 return View(model);
             }
 
-            // Gom sản phẩm trùng nhau trong cùng đơn
+            var error = await ValidateOrderDetails(model.OrderDetails);
+
+            if (error != null)
+            {
+                ModelState.AddModelError("", error);
+
+                LoadViewData();
+
+                return View(model);
+            }
+
+            _context.Orders.Add(model.Order);
+
+            await _context.SaveChangesAsync();
+
+            foreach (var item in model.OrderDetails)
+            {
+                item.OrderId = model.Order.OrderId;
+
+                _context.OrderDetails.Add(item);
+            }
+
+            await DeductStock(model.OrderDetails);
+
+            model.Order.TotalAmount =
+                CalculateTotal(model.OrderDetails);
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Details),
+                new { id = model.Order.OrderId });
+        }
+
+        public async Task<IActionResult> CreateDraft(OrderCreateViewModel model)
+        {
+            // =========================
+            // VALIDATE HEADER
+            // =========================
+
+            if (model.Order.CustomerId <= 0)
+            {
+                ModelState.AddModelError("Order.CustomerId",
+                    "Vui lòng chọn khách hàng.");
+            }
+
+            if (model.Order.EmployeeId <= 0)
+            {
+                ModelState.AddModelError("Order.EmployeeId",
+                    "Vui lòng chọn nhân viên.");
+            }
+
+            if (model.Order.OrderDate == default)
+            {
+                ModelState.AddModelError("Order.OrderDate",
+                    "Vui lòng chọn ngày tạo đơn.");
+            }
+
+            // =========================
+            // VALIDATE DETAILS
+            // =========================
+
+            if (model.OrderDetails == null || !model.OrderDetails.Any())
+            {
+                ModelState.AddModelError("",
+                    "Vui lòng thêm ít nhất 1 sản phẩm.");
+            }
+            else
+            {
+                foreach (var item in model.OrderDetails)
+                {
+                    if (item.ProductId <= 0)
+                    {
+                        ModelState.AddModelError("",
+                            "Vui lòng chọn sản phẩm.");
+                    }
+
+                    if (item.Quantity <= 0)
+                    {
+                        ModelState.AddModelError("",
+                            "Số lượng phải lớn hơn 0.");
+                    }
+
+                    if (item.UnitPrice <= 0)
+                    {
+                        ModelState.AddModelError("",
+                            "Đơn giá phải lớn hơn 0.");
+                    }
+                }
+            }
+
+            // Nếu validate fail
+            if (!ModelState.IsValid)
+            {
+                LoadViewData();
+                return View(model);
+            }
+
+            // =========================
+            // GROUP PRODUCT
+            // =========================
+
             var groupedProducts = model.OrderDetails
                 .GroupBy(x => x.ProductId)
                 .Select(g => new
@@ -136,15 +242,30 @@ namespace learnApp.Controllers
                 })
                 .ToList();
 
-            // Kiểm tra tồn kho
+            // =========================
+            // LOAD PRODUCTS 1 LẦN
+            // =========================
+
+            var productIds = groupedProducts
+                .Select(x => x.ProductId)
+                .Distinct()
+                .ToList();
+
+            var products = await _context.Products
+                .Where(p => productIds.Contains(p.ProductId))
+                .ToDictionaryAsync(p => p.ProductId);
+
+            // =========================
+            // VALIDATE STOCK
+            // =========================
+
             foreach (var item in groupedProducts)
             {
-                var product = await _context.Products
-                    .FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
-
-                if (product == null)
+                if (!products.TryGetValue(item.ProductId, out var product))
                 {
-                    ModelState.AddModelError("", "Sản phẩm không tồn tại.");
+                    ModelState.AddModelError("",
+                        "Sản phẩm không tồn tại.");
+
                     LoadViewData();
                     return View(model);
                 }
@@ -154,44 +275,59 @@ namespace learnApp.Controllers
                 if (stock < item.TotalQuantity)
                 {
                     ModelState.AddModelError("",
-                        $"Sản phẩm '{product.ProductName}' chỉ còn {stock} {product.Unit}.");
-
-                    TempData["Error"] =
-                        $"Sản phẩm '{product.ProductName}' chỉ còn {stock} {product.Unit}.";
+                        $"'{product.ProductName}' chỉ còn {stock} {product.Unit}.");
 
                     LoadViewData();
                     return View(model);
                 }
             }
 
-            // Tạo order
-            _context.Orders.Add(model.Order);
-            await _context.SaveChangesAsync();
+            // =========================
+            // CREATE ORDER
+            // =========================
 
-            decimal total = 0;
+            using var transaction =
+                await _context.Database.BeginTransactionAsync();
 
-            // Lưu detail + trừ kho
-            foreach (var item in model.OrderDetails)
+            try
             {
-                item.OrderId = model.Order.OrderId;
+                decimal total = 0;
 
-                total += item.Quantity * item.UnitPrice;
+                foreach (var item in model.OrderDetails)
+                {
+                    total += item.Quantity * item.UnitPrice;
 
-                _context.OrderDetails.Add(item);
+                    // trừ tồn
+                    products[item.ProductId].StockQuantity =
+                        (products[item.ProductId].StockQuantity ?? 0)
+                        - item.Quantity;
+                }
 
-                // trừ tồn kho
-                var product = await _context.Products
-                    .FirstAsync(p => p.ProductId == item.ProductId);
+                model.Order.TotalAmount = total;
 
-                product.StockQuantity =
-                    (product.StockQuantity ?? 0) - item.Quantity;
+                // add details vào order
+                model.Order.OrderDetails = model.OrderDetails;
+
+                _context.Orders.Add(model.Order);
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return RedirectToAction(nameof(Details),
+                    new { id = model.Order.OrderId });
             }
+            catch
+            {
+                await transaction.RollbackAsync();
 
-            model.Order.TotalAmount = total;
+                ModelState.AddModelError("",
+                    "Có lỗi xảy ra khi tạo đơn hàng.");
 
-            await _context.SaveChangesAsync();
+                LoadViewData();
 
-            return RedirectToAction(nameof(Details), new { id = model.Order.OrderId });
+                return View(model);
+            }
         }
 
         [HttpGet]
@@ -218,6 +354,21 @@ namespace learnApp.Controllers
                 .ToList();
 
             return Json(sites);
+        }
+
+        public IActionResult SearchCustomers(string q)
+        {
+            var data = _context.Customers
+                .Where(x => x.CustomerName.Contains(q))
+                .Select(x => new
+                {
+                    id = x.CustomerId,
+                    name = x.CustomerName
+                })
+                .Take(20)
+                .ToList();
+
+            return Json(data);
         }
 
         // GET: Orders/Edit/5
@@ -275,6 +426,74 @@ namespace learnApp.Controllers
                 return NotFound();
             }
 
+            // hoàn kho cũ trước khi validate
+            await RestoreStock(order.OrderDetails);
+
+            var error = await ValidateOrderDetails(model.OrderDetails);
+
+            if (error != null)
+            {
+                // rollback kho cũ
+                await DeductStock(order.OrderDetails);
+
+                ModelState.AddModelError("", error);
+
+                LoadViewData();
+
+                return View(model);
+            }
+
+            // update order
+            order.CustomerId = model.Order.CustomerId;
+            order.EmployeeId = model.Order.EmployeeId;
+            order.SiteId = model.Order.SiteId;
+            order.OrderDate = model.Order.OrderDate;
+
+            // xoá detail cũ
+            _context.OrderDetails.RemoveRange(order.OrderDetails);
+
+            // add detail mới
+            foreach (var item in model.OrderDetails)
+            {
+                item.OrderId = order.OrderId;
+
+                _context.OrderDetails.Add(item);
+            }
+
+            // trừ kho mới
+            await DeductStock(model.OrderDetails);
+
+            // cập nhật tổng tiền
+            order.TotalAmount =
+                CalculateTotal(model.OrderDetails);
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Details),
+                new { id = order.OrderId });
+        }
+        public async Task<IActionResult> EditDraft(int id, OrderCreateViewModel model)
+        {
+            var error = await ValidateOrderDetails(model.OrderDetails);
+
+            if (error != null)
+            {
+                ModelState.AddModelError("", error);
+
+                LoadViewData();
+
+                return View(model);
+            }
+
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderId == id);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
             // =========================
             // HOÀN LẠI TỒN KHO CŨ
             // =========================
@@ -311,9 +530,18 @@ namespace learnApp.Controllers
 
                 if (product == null)
                 {
-                    ModelState.AddModelError("", "Sản phẩm không tồn tại.");
+                    ModelState.AddModelError("", "Sản phẩm không tồn tại.");                    
+                    LoadViewData();
+                    return View(model);
+                }
+
+                if (item.TotalQuantity <= 0)
+                {
+                    ModelState.AddModelError("",
+                        "Số lượng phải lớn hơn 0.");
 
                     LoadViewData();
+
                     return View(model);
                 }
 
@@ -390,6 +618,7 @@ namespace learnApp.Controllers
 
             return RedirectToAction(nameof(Details), new { id = order.OrderId });
         }
+
         // GET: Orders/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
@@ -475,6 +704,7 @@ namespace learnApp.Controllers
                 .Include(o => o.Site)
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
+                .OrderBy(o => o.OrderDate)
                 .AsQueryable();
 
             var paid = _context.CustomerPayments.AsQueryable();
@@ -535,6 +765,87 @@ namespace learnApp.Controllers
                     $"<option value='{p.ProductId}' data-price='{p.Price}'>" +
                     $"{p.ProductName} (Còn: {p.StockQuantity})</option>"
                 ));
+        }
+
+        private async Task<string?> ValidateOrderDetails(
+    IEnumerable<OrderDetail> details)
+        {
+            if (details == null || !details.Any())
+            {
+                return "Đơn hàng chưa có sản phẩm.";
+            }
+
+            var groupedProducts = details
+                .GroupBy(x => x.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    TotalQuantity = g.Sum(x => x.Quantity)
+                })
+                .ToList();
+
+            foreach (var item in groupedProducts)
+            {
+                var product = await _context.Products
+                    .FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
+
+                if (product == null)
+                {
+                    return "Sản phẩm không tồn tại.";
+                }
+
+                if (item.TotalQuantity <= 0)
+                {
+                    return "Số lượng phải lớn hơn 0.";
+                }
+
+                decimal stock = product.StockQuantity ?? 0;
+
+                if (stock < item.TotalQuantity)
+                {
+                    return $"Sản phẩm '{product.ProductName}' chỉ còn {stock} {product.Unit}.";
+                }
+            }
+
+            return null;
+        }
+
+        private async Task DeductStock(
+            IEnumerable<OrderDetail> details)
+        {
+            foreach (var item in details)
+            {
+                var product = await _context.Products
+                    .FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
+
+                if (product != null)
+                {
+                    product.StockQuantity =
+                        (product.StockQuantity ?? 0) - item.Quantity;
+                }
+            }
+        }
+
+        private async Task RestoreStock(
+            IEnumerable<OrderDetail> details)
+        {
+            foreach (var item in details)
+            {
+                var product = await _context.Products
+                    .FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
+
+                if (product != null)
+                {
+                    product.StockQuantity =
+                        (product.StockQuantity ?? 0) + item.Quantity;
+                }
+            }
+        }
+
+        private decimal CalculateTotal(
+            IEnumerable<OrderDetail> details)
+        {
+            return details.Sum(x => x.Quantity * x.UnitPrice);
         }
     }
 }

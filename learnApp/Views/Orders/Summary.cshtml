@@ -46,7 +46,7 @@
                 <td>@CurrencyHelper.FormatQuantity(item.Quantity)</td>
                 <td>@CurrencyHelper.ToVnd(item.UnitPrice)</td>
                 <td>@CurrencyHelper.ToVnd(thanhTien)</td>
-                <td></td>
+                <td>@item.Note</td>
                 @if (Model.SiteId <= 0 && order.Site != null)
                 {
                     <td>@order.Site.Name</td>

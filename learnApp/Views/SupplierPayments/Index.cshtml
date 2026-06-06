@@ -1,5 +1,5 @@
 ﻿@model IEnumerable<learnApp.Models.SupplierPayment>
-
+@using learnApp.Helper
 @{
     ViewData["Title"] = "Index";
 }
@@ -19,7 +19,7 @@
                 @Html.DisplayNameFor(model => model.PaymentDate)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Supplier)
+                @Html.DisplayNameFor(model => model.Supplier.SupplierName)
             </th>
             <th></th>
         </tr>
@@ -28,13 +28,13 @@
 @foreach (var item in Model) {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.Amount)
+                @CurrencyHelper.ToVnd(item.Amount)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.PaymentDate)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Supplier.SupplierId)
+                @Html.DisplayFor(modelItem => item.Supplier.SupplierName)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.SupplierPaymentId">Edit</a> |

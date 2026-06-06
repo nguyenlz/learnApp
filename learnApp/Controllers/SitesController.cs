@@ -19,10 +19,15 @@ namespace learnApp.Controllers
         }
 
         // GET: Sites
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchbarinput)
         {
-            var vlxdContext = _context.Sites.Include(s => s.Customer);
-            return View(await vlxdContext.ToListAsync());
+            var sites = _context.Sites.Include(s => s.Customer).AsQueryable();
+            if (!string.IsNullOrEmpty(searchbarinput))
+            {
+                sites = sites.Where(s => s.Name.Contains(searchbarinput) || s.Customer.CustomerName.Contains(searchbarinput));
+            }
+
+            return View(await sites.ToListAsync());
         }
 
         // GET: Sites/Details/5
@@ -47,7 +52,7 @@ namespace learnApp.Controllers
         // GET: Sites/Create
         public IActionResult Create()
         {
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerName");
+            ViewData["CustomerId"] = new SelectList(_context.Customers.Where(c => c.Type == Enums.CustomerType.Contractor), "CustomerId", "CustomerName");
             return View();
         }
 
@@ -64,7 +69,7 @@ namespace learnApp.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", site.CustomerId);
+            ViewData["CustomerId"] = new SelectList(_context.Customers.Where(c => c.Type == Enums.CustomerType.Contractor), "CustomerId", "CustomerName");
             return View(site);
         }
 

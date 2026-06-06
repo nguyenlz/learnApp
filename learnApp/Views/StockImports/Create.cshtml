@@ -67,16 +67,37 @@
 
                     <div class="card-body p-4">
 
-                        <h5 class="fw-semibold mb-4">
-                            🏢 Thông tin nhập hàng
-                        </h5>
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+
+                            <div>
+
+                                <h5 class="fw-semibold mb-1">
+
+                                    <i class="bi bi-box-seam me-2 text-primary"></i>
+
+                                    Thông tin nhập hàng
+
+                                </h5>
+
+                                <div class="small text-muted">
+
+                                    Chọn nhà cung cấp, nhân viên và ngày nhập hàng
+
+                                </div>
+
+                            </div>
+
+                        </div>
 
                         <div class="row g-3">
 
-                            <div class="col-md-6">
+                            <!-- SUPPLIER -->
+                            <div class="col-lg-4">
 
                                 <label class="form-label fw-medium">
+
                                     Nhà cung cấp
+
                                 </label>
 
                                 <select asp-for="SupplierId"
@@ -92,10 +113,13 @@
 
                             </div>
 
-                            <div class="col-md-6">
+                            <!-- EMPLOYEE -->
+                            <div class="col-lg-4">
 
                                 <label class="form-label fw-medium">
+
                                     Nhân viên
+
                                 </label>
 
                                 <select asp-for="EmployeeId"
@@ -105,12 +129,28 @@
 
                             </div>
 
+                            <!-- IMPORT DATE -->
+                            <div class="col-lg-4">
+
+                                <label class="form-label fw-medium">
+
+                                    Ngày nhập
+
+                                </label>
+
+                                <input asp-for="ImportDate"
+                                       type="date"
+                                       class="form-control form-control-lg"
+                                       value="@(Model?.ImportDate?.ToString("yyyy-MM-dd")
+                                                                                       ?? DateTime.Now.ToString("yyyy-MM-dd"))" />
+
+                            </div>
+
                         </div>
 
                     </div>
 
                 </div>
-
                 <!-- PRODUCT -->
                 <div class="card border-0 shadow-sm">
 
@@ -621,42 +661,69 @@
         let keyword =
             removeVietnameseTones(input.value);
 
-        let wrapper =
-            input.closest(".product-picker");
+        // let wrapper =
+        //     input.closest(".product-picker");
 
-        let select =
-            wrapper.querySelector(".product-select");
+        // let select =
+        //     wrapper.querySelector(".product-select");
 
-        let filtered = [...currentProducts];
+        // let filtered = [...currentProducts];
 
-        if (keyword) {
+        // if (keyword) {
 
-            filtered = filtered.filter(p => {
+        //     filtered = filtered.filter(p => {
 
-                return removeVietnameseTones(p.productName)
+        //         return removeVietnameseTones(p.productName)
+        //             .includes(keyword);
+        //     });
+
+        //     filtered.sort((a, b) => {
+
+        //         let aName =
+        //             removeVietnameseTones(a.productName);
+
+        //         let bName =
+        //             removeVietnameseTones(b.productName);
+
+        //         let aStarts =
+        //             aName.startsWith(keyword) ? 0 : 1;
+
+        //         let bStarts =
+        //             bName.startsWith(keyword) ? 0 : 1;
+
+        //         return aStarts - bStarts;
+        //     });
+        // }
+
+        // select.innerHTML =
+        //     getProductOptions(filtered);
+
+        const row = input.closest('tr');
+
+        const select =
+            row.querySelector('.product-select');
+
+        let firstMatch = null;
+
+        [...select.options].forEach(option => {
+
+            const match =
+                removeVietnameseTones(option.text)
                     .includes(keyword);
-            });
 
-            filtered.sort((a, b) => {
+            option.hidden = !match;
 
-                let aName =
-                    removeVietnameseTones(a.productName);
+            if (match && !firstMatch) {
+                firstMatch = option;
+            }
+        });
 
-                let bName =
-                    removeVietnameseTones(b.productName);
+        if (firstMatch) {
 
-                let aStarts =
-                    aName.startsWith(keyword) ? 0 : 1;
+            select.value = firstMatch.value;
 
-                let bStarts =
-                    bName.startsWith(keyword) ? 0 : 1;
-
-                return aStarts - bStarts;
-            });
+            updatePrice(row);
         }
-
-        select.innerHTML =
-            getProductOptions(filtered);
     }
 
 </script>

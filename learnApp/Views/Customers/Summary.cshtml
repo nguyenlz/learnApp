@@ -1,89 +1,599 @@
 ﻿@model learnApp.ViewModels.CustomerSummaryViewModel
 @using learnApp.Helper
 
-<h4>Tổng hợp</h4>
-<table class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th>Khách hàng</th>
-            <th>Tổng tiền</th>
-            <th>Đã trả</th>
-            <th>Còn nợ</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>@Model.CustomerName</td>
-            <td>@Model.TotalAmount.ToString("N0")</td>
-            <td>@Model.PaidAmount.ToString("N0")</td>
-            <td class="text-danger fw-bold">
-                @Model.DebtAmount.ToString("N0")
-            </td>
-            <td>
-                <a asp-controller="CustomerPayments"
-                       asp-action="Create"
-                       asp-route-customerId="@Model?.CustomerId"
-                       asp-route-debtAmount="@Model?.DebtAmount"
-                       class="btn btn-warning">
-                    Thanh toán
-                </a>
-                <a asp-controller="CustomerPayments"
-                       asp-action="Create"
-                       asp-route-customerId="@Model?.CustomerId"
-                       asp-route-debtAmount="0"
-                       class="btn btn-success">
-                    Đặt cọc
-                </a>
-            </td>
-        </tr>
-    </tbody>
-</table>
+@{
+    ViewData["Title"] = "Công nợ khách hàng";
 
-<hr />
-<h4>Đơn hàng</h4>
-<a asp-controller="Orders"
-       asp-action="Summary"
-       asp-route-customerId="@Model?.CustomerId"
-       asp-route-type="all"
-       class="btn btn-primary">
-    Tất cả đơn
-</a>
-<a asp-controller="Orders"
-       asp-action="Summary"
-       asp-route-customerId="@Model?.CustomerId"
-       asp-route-type="unpaid"
-       class="btn btn-info">
-    Đơn chưa thanh toán
-</a>
+    decimal debtPercent = 0;
 
-<hr />
-<h4>Lịch sử thanh toán</h4>
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Ngày thanh toán</th>
-            <th>Số tiền</th>
-            <th>Ghi chú</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model.CustomerPayments != null && Model.CustomerPayments.Any())
-        {
-            @foreach (var payment in Model.CustomerPayments)
-            {
-                <tr>
-                    <td>@payment.PaymentDate.ToString("dd/MM/yyyy")</td>
-                    <td>@CurrencyHelper.ToVnd(payment.Amount)</td>
-                    <td>@payment.Note</td>
-                </tr>
-            }
+    if (Model.TotalAmount > 0)
+    {
+        debtPercent =
+            (Model.DebtAmount / Model.TotalAmount) * 100;
+    }
+}
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+
+                <i class="bi bi-cash-stack text-primary me-2"></i>
+
+                Công nợ khách hàng
+
+            </h2>
+
+            <div class="text-muted">
+
+                Theo dõi thanh toán và lịch sử công nợ
+
+            </div>
+
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+
+            <a asp-controller="CustomerPayments"
+                   asp-action="Create"
+                   asp-route-customerId="@Model.CustomerId"
+                   asp-route-debtAmount="@Model.DebtAmount"
+                   class="btn btn-warning rounded-pill px-4">
+
+                <i class="bi bi-wallet2 me-1"></i>
+
+                Thanh toán
+
+            </a>
+
+            <a asp-controller="CustomerPayments"
+                   asp-action="Create"
+                   asp-route-customerId="@Model.CustomerId"
+                   asp-route-debtAmount="0"
+                   class="btn btn-success rounded-pill px-4">
+
+                <i class="bi bi-piggy-bank me-1"></i>
+
+                Đặt cọc
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="row g-3 mb-4">
+
+        <!-- CUSTOMER -->
+        <div class="col-lg-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="summary-icon bg-primary-subtle text-primary">
+
+                            <i class="bi bi-person-fill"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Khách hàng
+                            </div>
+
+                            <div class="fw-bold">
+
+                                @Model.CustomerName
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- TOTAL -->
+        <div class="col-lg-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="summary-icon bg-info-subtle text-info">
+
+                            <i class="bi bi-receipt"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Tổng đơn hàng
+                            </div>
+
+                            <div class="fw-bold fs-5">
+
+                                @CurrencyHelper.ToVnd(Model.TotalAmount)
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- PAID -->
+        <div class="col-lg-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="summary-icon bg-success-subtle text-success">
+
+                            <i class="bi bi-check-circle-fill"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Đã thanh toán
+                            </div>
+
+                            <div class="fw-bold fs-5">
+
+                                @CurrencyHelper.ToVnd(Model.PaidAmount)
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- DEBT -->
+        <div class="col-lg-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="summary-icon bg-danger-subtle text-danger">
+
+                            <i class="bi bi-exclamation-circle-fill"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Còn nợ
+                            </div>
+
+                            <div class="fw-bold fs-5 text-danger">
+
+                                @CurrencyHelper.ToVnd(Model.DebtAmount)
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+
+                <div class="fw-semibold">
+
+                    Tiến độ thanh toán
+
+                </div>
+
+                <div class="small text-muted">
+
+                    @((100 - debtPercent).ToString("0"))%
+                    @* đã thanh toán *@
+
+                </div>
+
+            </div>
+
+            <div class="progress"
+                 style="height:12px; border-radius:20px;">
+
+                <div class="progress-bar bg-success"
+                     style="width:@(100 - debtPercent)%">
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="row g-4">
+
+        <!-- LEFT -->
+        <div class="col-lg-8">
+
+            <!-- ORDER ACTION -->
+            <div class="card border-0 shadow-sm mb-4">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                        <div>
+
+                            <h5 class="fw-bold mb-1">
+
+                                <i class="bi bi-box-seam me-2"></i>
+
+                                Đơn hàng
+
+                            </h5>
+
+                            <div class="text-muted small">
+
+                                Theo dõi tất cả đơn hàng của khách
+
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex gap-2 flex-wrap">
+
+                            <a asp-controller="Orders"
+                                   asp-action="Summary"
+                                   asp-route-customerId="@Model.CustomerId"
+                                   asp-route-type="all"
+                                   class="btn btn-primary rounded-pill">
+
+                                <i class="bi bi-grid me-1"></i>
+
+                                Tất cả đơn
+
+                            </a>
+
+                            <a asp-controller="Orders"
+                                   asp-action="Summary"
+                                   asp-route-customerId="@Model.CustomerId"
+                                   asp-route-type="unpaid"
+                                   class="btn btn-outline-danger rounded-pill">
+
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+
+                                Chưa thanh toán
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- PAYMENT HISTORY -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+
+                <div class="card-header bg-white border-0 py-3">
+
+                    <div>
+
+                        <h5 class="fw-bold mb-1">
+
+                            <i class="bi bi-clock-history me-2"></i>
+
+                            Lịch sử thanh toán
+
+                        </h5>
+
+                        <div class="text-muted small">
+
+                            Danh sách các lần thanh toán của khách hàng
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle mb-0">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th>
+                                    Ngày thanh toán
+                                </th>
+
+                                <th>
+                                    Số tiền
+                                </th>
+
+                                <th>
+                                    Ghi chú
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @if (Model.CustomerPayments != null
+                            && Model.CustomerPayments.Any())
+                            {
+                                @foreach (var payment in Model.CustomerPayments
+                               .OrderByDescending(x => x.PaymentDate))
+                                {
+                                    <tr>
+
+                                        <td>
+
+                                            <div class="fw-semibold">
+
+                                                @payment.PaymentDate.ToString("dd/MM/yyyy")
+
+                                            </div>
+
+                                            <div class="small text-muted">
+
+                                                @payment.PaymentDate.ToString("HH:mm")
+
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+
+                                            <span class="fw-bold text-success">
+
+                                                @CurrencyHelper.ToVnd(payment.Amount)
+
+                                            </span>
+
+                                        </td>
+
+                                        <td>
+
+                                            @if (string.IsNullOrWhiteSpace(payment.Note))
+                                            {
+                                                <span class="text-muted">
+
+                                                    Không có ghi chú
+
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                @payment.Note
+                                            }
+
+                                        </td>
+
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+
+                                    <td colspan="3"
+                                        class="text-center py-5">
+
+                                        <div class="py-3">
+
+                                            <i class="bi bi-wallet2 display-5 text-secondary"></i>
+
+                                            <div class="fw-semibold mt-3">
+
+                                                Chưa có lịch sử thanh toán
+
+                                            </div>
+
+                                            <div class="text-muted small">
+
+                                                Các khoản thanh toán sẽ hiển thị tại đây
+
+                                            </div>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="col-lg-4">
+
+            <!-- STATUS -->
+            <div class="card border-0 shadow-sm sticky-top"
+                 style="top:90px;">
+
+                <div class="card-body">
+
+                    <h5 class="fw-bold mb-4">
+
+                        <i class="bi bi-bar-chart-fill me-2"></i>
+
+                        Tổng quan
+
+                    </h5>
+
+                    <div class="border rounded-4 p-3 mb-3">
+
+                        <div class="small text-muted mb-1">
+                            Trạng thái công nợ
+                        </div>
+
+                        @if (Model.DebtAmount <= 0)
+                        {
+                            <div class="text-success fw-bold">
+
+                                <i class="bi bi-check-circle-fill me-1"></i>
+
+                                Đã thanh toán đủ
+
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-danger fw-bold">
+
+                                <i class="bi bi-exclamation-circle-fill me-1"></i>
+
+                                Còn công nợ
+
+                            </div>
+                        }
+
+                    </div>
+
+                    <div class="border rounded-4 p-3 mb-3">
+
+                        <div class="small text-muted mb-1">
+                            Tỷ lệ công nợ
+                        </div>
+
+                        <div class="fw-bold">
+
+                            @debtPercent.ToString("0")%
+
+                        </div>
+
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+
+                        <a asp-controller="Customers"
+                               asp-action="Index"
+                               class="btn btn-light border rounded-pill">
+
+                            <i class="bi bi-arrow-left me-1"></i>
+
+                            Quay lại danh sách
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+    body {
+        background: #f5f7fb;
+    }
+
+    .card {
+        border-radius: 20px;
+    }
+
+    .summary-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .table thead th {
+        border-bottom: 0;
+        font-size: 13px;
+        font-weight: 700;
+        color: #6b7280;
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+
+    .table tbody td {
+        padding-top: 18px;
+        padding-bottom: 18px;
+        border-color: #f1f5f9;
+        vertical-align: middle;
+    }
+
+    .table tbody tr {
+        transition: 0.15s;
+    }
+
+        .table tbody tr:hover {
+            background-color: #fafafa;
         }
-        else
-        {
-            <tr>
-                <td colspan="2">Không có dữ liệu thanh toán</td>
-            </tr>
-        }
-    </tbody>
-</table>
+
+    .btn {
+        font-weight: 500;
+    }
+
+</style>

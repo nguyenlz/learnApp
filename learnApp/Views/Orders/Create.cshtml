@@ -2,36 +2,34 @@
 @using learnApp.Helper
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Tạo đơn hàng";
 }
 
-@if (TempData["Error"] != null)
+@* @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show">
         @TempData["Error"]
-        <button type="button"
-                class="btn-close"
-                data-bs-dismiss="alert">
-        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-}
+} *@
 
-<form asp-action="Create" onsubmit="beforeSubmit()">
-    <div class="card shadow-sm border-0">
+<form asp-action="Create" id="orderForm">
+
+    <!-- ORDER INFO -->
+    <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
 
-            <div class="card-section-title">
-                Thông tin đơn hàng
-            </div>
+            <h5 class="section-title">
+                🧾 Thông tin đơn hàng
+            </h5>
 
             <div class="row g-3">
 
-                <div class="col-md-3">
-                    <label class="form-label form-label-custom">
-                        Khách hàng
-                    </label>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label-custom">Khách hàng</label>
 
                     <select asp-for="Order.CustomerId"
+                            id="customerSelect"
                             class="form-select"
                             asp-items="ViewBag.CustomerId"
                             onchange="loadSites(this)">
@@ -39,10 +37,8 @@
                     </select>
                 </div>
 
-                <div class="col-md-3">
-                    <label class="form-label form-label-custom">
-                        Nhân viên
-                    </label>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label-custom">Nhân viên</label>
 
                     <select asp-for="Order.EmployeeId"
                             class="form-select"
@@ -50,382 +46,594 @@
                     </select>
                 </div>
 
-                <div class="col-md-3">
-                    <label class="form-label form-label-custom">
-                        Công trình
-                    </label>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label-custom">Công trình</label>
 
                     <select asp-for="Order.SiteId"
+                            id="siteSelect"
                             class="form-select"
                             disabled>
                         <option value="">-- Chọn công trình --</option>
                     </select>
                 </div>
 
-                <div class="col-md-3">
-                    <label class="form-label form-label-custom">
-                        Ngày tạo đơn
-                    </label>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label-custom">Ngày tạo</label>
 
                     <input asp-for="Order.OrderDate"
-                           type="datetime-local"
-                           value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
+                           type="date"
+                           value="@DateTime.Now.ToString("yyyy-MM-dd")"
                            class="form-control" />
                 </div>
 
             </div>
-
-        </div>
-    </div>
-    @* <div class="row">
-        <div class="col-md-4">
-
-            <select asp-for="Order.CustomerId"
-                    class="form-control"
-                    asp-items="ViewBag.CustomerId"
-                    onchange="loadSites(this)">
-                <option value="">-- Chọn khách hàng --</option>
-            </select>
-
-            <div class="form-group">
-                <label>Nhân viên</label>
-                <select asp-for="Order.EmployeeId" class="form-control" asp-items="ViewBag.EmployeeId"></select>
-            </div>
-
-            <div class="form-group">
-                <label>Công trình</label>
-                <select asp-for="Order.SiteId" class="form-control" disabled>
-                    <option value="">-- Chọn công trình --</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Ngày</label>
-                <input asp-for="Order.OrderDate" type="datetime-local" class="form-control" />
-            </div>
-
         </div>
     </div>
 
-    <hr /> *@
+    <!-- PRODUCTS -->
+    <div class="card border-0 shadow-sm">
 
-    <h4 class="card-section-title mt-4">
-        Danh sách sản phẩm
-    </h4>
-
-    <div class="table-responsive border rounded shadow-sm">
-        <table class="table align-middle mb-0" id="orderDetailsTable">
-
-            <thead class="table-light">
-                <tr>
-                    <th style="min-width:420px;">Sản phẩm</th>
-
-                    <th style="width:120px;" class="text-end">
-                        Số lượng
-                    </th>
-
-                    <th style="width:180px;" class="text-end">
-                        Đơn giá
-                    </th>
-
-                    <th style="width:180px;" class="text-end">
-                        Thành tiền
-                    </th>
-
-                    <th style="width:70px;"></th>
-                </tr>
-            </thead>
-
-            <tbody>
-            </tbody>
-
-        </table>
-    </div>
-
-    <button type="button" class="btn btn-success mt-3" onclick="addRow()">+ Thêm sản phẩm</button>    
-    <hr />
-
-    <div class="card shadow-sm border-0 mb-3">
         <div class="card-body">
-            <div class="d-flex justify-content-between">
-                <span class="fw-bold">Tổng tiền hàng</span>
-                <strong id="grandTotal">0 ₫</strong>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <h5 class="section-title mb-0">
+                    📦 Danh sách sản phẩm
+                </h5>
+
+                <button type="button"
+                        class="btn btn-success"
+                        onclick="addRow()">
+
+                    <i class="fa-solid fa-plus"></i>
+                    Thêm sản phẩm
+
+                </button>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table align-middle" id="orderTable">
+
+                    <thead>
+                        <tr>
+                            <th style="min-width:320px;">Sản phẩm</th>
+                            <th width="110" class="text-end">SL</th>
+                            <th width="150" class="text-end">Đơn giá</th>
+                            <th width="80" class="text-center">Đai</th>
+                            <th width="180">Ghi chú</th>
+                            <th width="160" class="text-end">Thành tiền</th>
+                            <th width="60"></th>
+                        </tr>
+                    </thead>
+
+                    <tbody></tbody>
+
+                </table>
             </div>
         </div>
     </div>
-    <div class="sticky-bottom bg-white border-top p-3 shadow-sm">
-        <button type="submit" class="btn btn-primary">Lưu đơn</button>
-    </div>
+
+    <!-- Error -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" asp-validation-summary="All">
+            @* @TempData["Error"] *@
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- TOTAL -->
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+
+            <div>
+                <div class="text-muted small">
+                    Tổng thanh toán
+                </div>
+
+                <h3 id="grandTotal" class="mb-0 fw-bold text-primary">
+                    0 ₫
+                </h3>
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary btn-lg px-4">
+
+                <i class="fa-solid fa-check"></i>
+                Lưu đơn hàng
+
+            </button>
+
+        </div>
+    </div>   
+
 </form>
 
 @section Scripts {
-<script>
-    let index = 0;
 
-    function addRow() {
-        let currentIndex = index;
-        let row = `
-        <tr>
-            <td style="min-width:420px;">
-                <div class="d-flex gap-2">
+    <script>
 
-                    <input type="text"
-                           class="form-control product-search"
-                           placeholder="Tìm sản phẩm..."
-                           style="max-width:160px;"
-                           onkeyup="filterProducts(this)" />
+        let index = 0;
 
-                    <select name="OrderDetails[${currentIndex}].ProductId"
-                            class="form-select"
-                            onchange="loadPrice(this)">
-                        ${getProductOptions()}
-                    </select>
+        const tableBody = document.querySelector('#orderTable tbody');
 
-                </div>
-            </td>
-            <td style="width:120px">
-                <input name="OrderDetails[${currentIndex}].Quantity"
-                   type="number"
-                   step="any"
-                   class="form-control"
-                   value="1"
-                   onchange="calculate(this)" />
-            </td>
-            <td style="width:180px">
-                <input name="OrderDetails[${currentIndex}].UnitPrice"
-                   type="text"
-                   class="form-control"
-                   value="0"
-                   onfocus="unformatPrice(this)"
-                   onblur="formatPrice(this)"
-                   onchange="calculate(this)" />
-            </td>
-            <td class="total text-end money-text">
-                0 ₫
-            </td>
-            <td class="text-center">
-                <button type="button"
-                        class="btn btn-outline-danger btn-sm"
-                        onclick="removeRow(this)">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            </td>
-        </tr> 
-        `;
-        document.querySelector("#orderDetailsTable tbody").insertAdjacentHTML('beforeend', row);
-        index++;
-        calculateGrandTotal();
-    }
+        const PRODUCT_OPTIONS = `@Html.Raw(ViewBag.ProductOptions)`;
 
-    function removeRow(btn) {
-        btn.closest('tr').remove();
-        calculateGrandTotal();
-    }
+        // =========================
+        // FORMAT
+        // =========================
 
-    function calculate(input) {
-        let row = input.closest('tr');
+        const formatMoney = value =>
+            Number(value || 0).toLocaleString('vi-VN') + ' ₫';
 
-        let qty = parseFloat(
-            row.querySelector('[name*="Quantity"]').value
-        ) || 0;
+        const parseMoney = value =>
+            Number(String(value || 0).replace(/[^\d]/g, '')) || 0;
 
-        let price = parseInt(
-            row.querySelector('[name*="UnitPrice"]').value.replace(/\./g, '')
-        ) || 0;
+        // =========================
+        // ADD ROW
+        // =========================
 
-        let total = qty * price;
+        function addRow() {
+            tableBody.insertAdjacentHTML('beforeend', createRow(index));
 
-        row.querySelector('.total').innerText =
-            total.toLocaleString('vi-VN') + ' ₫';
+            const row = tableBody.lastElementChild;
 
-        calculateGrandTotal();
-    }
+            updatePrice(row);
 
-    function loadPrice(select) {
-        let row = select.closest('tr');
+            index++;
 
-        let price = parseInt(
-            select.options[select.selectedIndex].getAttribute("data-price")
-        ) || 0;
+            setTimeout(() => {
 
-        let priceInput = row.querySelector('[name*="UnitPrice"]');
+            let searches =
+                document.querySelectorAll(".product-search");
 
-        // set raw value trước
-        priceInput.value = price;
+            searches[searches.length - 1].focus();
 
-        // format lại cho đẹp
-        formatPrice(priceInput);
+        }, 50);
+        }
 
-        calculate(priceInput);
-    }
+        function createRow(i) {
 
-    function formatPrice(input) {
-        let value = parseInt(input.value.replace(/\./g, '')) || 0;
-        input.value = value.toLocaleString('vi-VN'); // 1400 -> 1.400
-    }
+            return `
+            <tr>
 
-    function unformatPrice(input) {
-        input.value = input.value.replace(/\./g, ''); // 1.400 -> 1400
-    }
+                <td>
 
-    function getProductOptions() {
-        return `@Html.Raw(ViewBag.ProductOptions)`;
-    }
+                    <div class="d-flex gap-2">
 
-    function beforeSubmit() {
-        // bỏ dấu . của tiền
-        document.querySelectorAll('[name*="UnitPrice"]').forEach(input => {
-            input.value = input.value.replace(/\./g, '');
+                        <input type="text"
+                               class="form-control product-search"
+                               placeholder="Tìm..." />
+
+                        <select name="OrderDetails[${i}].ProductId"
+                                class="form-select product-select">
+                            <option value="">-- Chọn sản phẩm --</option>
+
+                            ${PRODUCT_OPTIONS}
+
+                        </select>
+
+                    </div>
+
+                </td>
+
+                <td>
+
+                    <input name="OrderDetails[${i}].Quantity"
+                           type="number"
+                           step="0.01"
+                           min="0.01"
+                           value="1"
+                           class="form-control text-end quantity-input" />
+
+                </td>
+
+                <td>
+
+                    <input name="OrderDetails[${i}].UnitPrice"
+                           type="text"
+                           value="0"
+                           class="form-control text-end price-input" />
+
+                </td>
+
+                <td class="text-center">
+
+                    <input type="checkbox"
+                       class="form-check-input processing-check"
+                       data-field="IsSteelProcessing" />
+
+                </td>
+
+                <td>
+
+                    <textarea name="OrderDetails[${i}].Note"
+                              rows="1"
+                              class="form-control"
+                              placeholder="Ghi chú"></textarea>
+
+                </td>
+
+                <td class="text-end fw-semibold total-cell"
+                    data-total="0">
+
+                    0 ₫
+
+                </td>
+
+                <td class="text-center">
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-danger remove-btn">
+
+                        <i class="fa-solid fa-trash"></i>
+
+                    </button>
+
+                </td>
+
+            </tr>
+            `;
+        }
+
+        function reIndexRows() {
+
+            document.querySelectorAll('#orderTable tbody tr')
+                .forEach((row, index) => {
+
+                    row.querySelectorAll('[name]')
+                        .forEach(input => {
+
+                            input.name = input.name.replace(
+                                /OrderDetails\[\d+\]/,
+                                `OrderDetails[${index}]`
+                            );
+                        });
+                });
+        }
+
+        // =========================
+        // EVENT DELEGATION
+        // =========================
+
+        document.addEventListener('input', e => {
+
+            // search product
+            if (e.target.classList.contains('product-search')) {
+                filterProducts(e.target);
+            }
+
+            // quantity
+            if (
+                e.target.classList.contains('quantity-input')
+            ) {
+                calculateRow(e.target.closest('tr'));
+            }
         });
 
-        // chuẩn hoá số lẻ
-        document.querySelectorAll('[name*="Quantity"]').forEach(input => {
-            input.value = input.value.replace(',', '.');
+        document.addEventListener('change', e => {
+
+            // select product
+            if (e.target.classList.contains('product-select')) {
+                updatePrice(e.target.closest('tr'));
+            }
+
+            // processing
+            if (e.target.classList.contains('processing-check')) {
+                updatePrice(e.target.closest('tr'));
+            }
         });
-    }
 
-    function loadSites(select) {
-        let customerId = select.value;
+        document.addEventListener('click', e => {
 
-        if (!customerId) return;
+            // remove row
+            if (e.target.closest('.remove-btn')) {
 
-        fetch('@Url.Action("GetSitesByCustomer", "Orders")' + '?customerId=' + customerId)
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error("Lỗi khi gọi API");
+                e.target.closest('tr').remove();
+
+                reIndexRows();
+
+                calculateGrandTotal();
+            }
+        });
+
+        document.addEventListener('blur', e => {
+
+            if (e.target.classList.contains('price-input')) {
+
+                e.target.value =
+                    parseMoney(e.target.value)
+                        .toLocaleString('vi-VN');
+
+                calculateRow(e.target.closest('tr'));
+            }
+
+        }, true);
+
+        // =========================
+        // PRICE
+        // =========================
+
+        function updatePrice(row) {
+
+            const select = row.querySelector('.product-select');
+
+            const option = select.options[select.selectedIndex];
+
+            const processing =
+                row.querySelector('.processing-check').checked;
+
+            let price =
+                parseInt(option.dataset.price || 0);
+
+            if (processing) {
+                price += 2500;
+            }
+
+            const priceInput =
+                row.querySelector('.price-input');
+
+            priceInput.value =
+                price.toLocaleString('vi-VN');
+
+            calculateRow(row);
+        }
+
+        function calculateRow(row) {
+
+            const qty =
+                parseFloat(
+                    row.querySelector('.quantity-input').value
+                ) || 0;
+
+            const price =
+                parseMoney(
+                    row.querySelector('.price-input').value
+                );
+
+            const total = qty * price;
+
+            const totalCell =
+                row.querySelector('.total-cell');
+
+            totalCell.dataset.total = total;
+
+            totalCell.innerText = formatMoney(total);
+
+            calculateGrandTotal();
+        }
+
+        function calculateGrandTotal() {
+
+            let total = 0;
+
+            document.querySelectorAll('.total-cell')
+                .forEach(td => {
+
+                    total += parseFloat(td.dataset.total || 0);
+                });
+
+            document.getElementById('grandTotal')
+                .innerText = formatMoney(total);
+        }
+
+        // =========================
+        // SEARCH PRODUCT
+        // =========================
+
+        function removeVietnameseTones(str) {
+
+            return str
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/đ/g, "d")
+                .replace(/Đ/g, "D")
+                .toLowerCase();
+        }
+
+        function filterProducts(input) {
+
+            const keyword =
+                removeVietnameseTones(input.value);
+
+            const row = input.closest('tr');
+
+            const select =
+                row.querySelector('.product-select');
+
+            let firstMatch = null;
+
+            [...select.options].forEach(option => {
+
+                const match =
+                    removeVietnameseTones(option.text)
+                        .includes(keyword);
+
+                option.hidden = !match;
+
+                if (match && !firstMatch) {
+                    firstMatch = option;
                 }
-                return res.json();
-            })
-            .then(data => {
-                let siteSelect = document.querySelector('[name="Order.SiteId"]');
+            });
 
-                // reset dropdown
-                siteSelect.innerHTML = '<option value="">-- Chọn công trình --</option>';
+            if (firstMatch) {
 
-                if (!data || data.length === 0) {
-                    siteSelect.disabled = true;
-                    return;
+                select.value = firstMatch.value;
+
+                updatePrice(row);
+            }
+        }
+
+        // =========================
+        // SUBMIT
+        // =========================
+
+        document.getElementById('orderForm').addEventListener('submit', () => {
+
+            document.querySelector('[name="Order.SiteId"]')
+                .disabled = false;
+
+            document.querySelectorAll('.price-input')
+                .forEach(input => {
+                    input.value = parseMoney(input.value);
+                });
+
+            document.querySelectorAll('.generated-hidden')
+                .forEach(x => x.remove());
+
+            reIndexRows();
+
+            document.querySelectorAll('#orderTable tbody tr')
+                .forEach((row, index) => {
+
+                    const checkbox =
+                        row.querySelector('.processing-check');
+
+                    const hidden =
+                        document.createElement('input');
+
+                    hidden.type = 'hidden';
+
+                    hidden.name =
+                        `OrderDetails[${index}].IsSteelProcessing`;
+
+                    hidden.value =
+                        checkbox.checked;
+
+                    hidden.classList.add('generated-hidden');
+
+                    row.appendChild(hidden);
+                });
+        });
+
+        // select customer and site
+        let customerTom;
+        let siteTom;
+
+        document.addEventListener("DOMContentLoaded", () => {
+
+            customerTom = new TomSelect("#customerSelect", {
+                valueField: "id",
+                labelField: "name",
+                searchField: "name",
+
+                load: async function(query, callback) {
+
+                    const res = await fetch(
+                        `/Orders/SearchCustomers?q=${query}`
+                    );
+
+                    callback(await res.json());
                 }
+            });
 
-                siteSelect.disabled = false;
+            siteTom = new TomSelect("#siteSelect", {
+                create: false
+            });
+
+        });
+
+
+        // =========================
+        // LOAD SITE
+        // =========================
+
+        async function loadSites(select) {
+
+            const customerId = select.value;
+
+            if (!customerId) {
+
+                siteTom.clear();
+                siteTom.clearOptions();
+                siteTom.disable();
+
+                return;
+            }
+
+            try {
+
+                const response = await fetch(
+                    '@Url.Action("GetSitesByCustomer", "Orders")?customerId=' + customerId
+                );
+
+                const data = await response.json();
+
+                siteTom.clear();
+                siteTom.clearOptions();
 
                 data.forEach(site => {
-                    let option = document.createElement("option");
-                    option.value = site.siteId;
-                    option.textContent = site.name;
-                    siteSelect.appendChild(option);
+
+                    siteTom.addOption({
+                        value: site.siteId,
+                        text: site.name
+                    });
+
                 });
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Không load được công trình");
-            });
-    }
 
-    function removeVietnameseTones(str) {
+                if (data.length > 0) {
+                    siteTom.enable();
+                } else {
+                    siteTom.disable();
+                }
 
-        return str
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/đ/g, "d")
-            .replace(/Đ/g, "D")
-            .toLowerCase();
-    }
-    
-    function filterProducts(input) {
+                siteTom.refreshOptions(false);
+            }
+            catch {
 
-        let keyword = removeVietnameseTones(input.value);
-
-        let td = input.closest('td');
-
-        let select = td.querySelector('select');
-
-        let hasVisible = false;
-
-        for (let option of select.options) {
-
-            let text = removeVietnameseTones(option.text);
-
-            let match = text.includes(keyword);
-
-            option.hidden = !match;
-
-            if (match) {
-                hasVisible = true;
+                alert('Không load được công trình');
             }
         }
 
-        // tự chọn option đầu tiên phù hợp
-        if (hasVisible) {
-
-            let firstVisible = [...select.options]
-                .find(o => !o.hidden);
-
-            if (firstVisible) {
-                select.value = firstVisible.value;
-                loadPrice(select);
-            }
-        }
-    }
-
-    function calculateGrandTotal() {
-
-        let total = 0;
-
-        document.querySelectorAll('.total').forEach(td => {
-
-            let value = td.innerText
-                .replace(/[₫.\s]/g, '')
-                .replace(',', '.');
-
-            total += parseFloat(value) || 0;
-        });
-
-        document.getElementById('grandTotal').innerText =
-            total.toLocaleString('vi-VN') + ' ₫';
-    }
-</script>
+    </script>
 }
 
 <style>
 
+    body {
+        background: #f8fafc;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
     .form-label-custom {
-        font-size: 15px;
         font-weight: 600;
         color: #334155;
         margin-bottom: 6px;
     }
 
-    .card-section-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 20px;
-    }
-
     .table thead th {
-        background-color: #f8fafc;
-        color: #334155;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 14px;
         font-weight: 700;
-        vertical-align: middle;
+        white-space: nowrap;
     }
 
     .table td {
         vertical-align: middle;
     }
 
-    .money-text {
-        font-weight: 600;
-        color: #0f172a;
+    .price-input,
+    .quantity-input {
+        min-width: 100px;
     }
 
-    #orderDetailsTable {
-        table-layout: fixed;
-        width: 100%;
+    textarea.form-control {
+        resize: none;
     }
 
-    .total {
-        white-space: nowrap;
+    .card {
+        border-radius: 16px;
     }
 
+    .btn {
+        border-radius: 10px;
+    }
 </style>

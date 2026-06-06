@@ -74,7 +74,7 @@
 
                         <div class="row g-3">
 
-                            <div class="col-md-6">
+                            <div class="col-lg-4">
 
                                 <label class="form-label fw-medium">
                                     Nhà cung cấp
@@ -93,7 +93,7 @@
 
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-lg-4">
 
                                 <label class="form-label fw-medium">
                                     Nhân viên
@@ -103,6 +103,20 @@
                                         class="form-select form-select-lg"
                                         asp-items="ViewBag.EmployeeId">
                                 </select>
+
+                            </div>
+
+                            <div class="col-lg-4">
+
+                                <label class="form-label fw-medium">
+                                    Ngày nhập
+                                </label>
+
+                                <input asp-for="ImportDate"
+                                       type="date"
+                                       class="form-control form-control-lg"
+                                       value="@(Model?.ImportDate?.ToString("yyyy-MM-dd")
+                                                                                                                                                              ?? DateTime.Now.ToString("yyyy-MM-dd"))" />
 
                             </div>
 

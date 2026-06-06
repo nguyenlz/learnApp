@@ -125,19 +125,39 @@ public partial class VlxdContext : DbContext
 
         modelBuilder.Entity<OrderDetail>(entity =>
         {
-            entity.HasKey(e => new { e.OrderId, e.ProductId }).HasName("PK__OrderDet__08D097C11AF87EFB");
+            entity.HasKey(e => e.OrderDetailId);
 
-            entity.Property(e => e.OrderId).HasColumnName("OrderID");
-            entity.Property(e => e.ProductId).HasColumnName("ProductID");
-            entity.Property(e => e.Quantity).HasPrecision(14, 2);
-            entity.Property(e => e.UnitPrice).HasPrecision(14, 2);
+            entity.Property(e => e.OrderDetailId)
+                .HasColumnName("OrderDetailID");
 
-            entity.HasOne(d => d.Order).WithMany(p => p.OrderDetails)
+            entity.Property(e => e.OrderId)
+                .HasColumnName("OrderID");
+
+            entity.Property(e => e.ProductId)
+                .HasColumnName("ProductID");
+
+            entity.Property(e => e.Quantity)
+                .HasPrecision(14, 2);
+
+            entity.Property(e => e.UnitPrice)
+                .HasPrecision(14, 2);
+
+            // hỗ trợ tiếng Việt
+            entity.Property(e => e.Note)
+                .HasMaxLength(500)
+                .IsUnicode(true);
+
+            entity.Property(e => e.IsSteelProcessing)
+                .HasDefaultValue(false);
+
+            entity.HasOne(d => d.Order)
+                .WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.OrderId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_OrderDetail_Order");
 
-            entity.HasOne(d => d.Product).WithMany(p => p.OrderDetails)
+            entity.HasOne(d => d.Product)
+                .WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OrderDetail_Product");
@@ -195,8 +215,9 @@ public partial class VlxdContext : DbContext
 
         modelBuilder.Entity<StockImportDetail>(entity =>
         {
-            entity.HasKey(e => new { e.ImportId, e.ProductId }).HasName("PK__StockImp__4DD7ABE466E9BCBD");
+            entity.HasKey(e => e.ImportDetailId);
 
+            entity.Property(e => e.ImportDetailId).ValueGeneratedOnAdd();
             entity.Property(e => e.ImportId).HasColumnName("ImportID");
             entity.Property(e => e.ProductId).HasColumnName("ProductID");
             entity.Property(e => e.Quantity).HasColumnType("decimal(12, 2)");
